@@ -1,10 +1,636 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Beamed Silicon</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beamed Silicon — Semiconductor Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg-0: #05070f; --bg-1: #080c18; --bg-2: #0b1020; --bg-3: #0f1428;
+      --bg-card: #111828; --bg-card-h: #151d30;
+      --border: rgba(255,255,255,0.06); --border-md: rgba(255,255,255,0.1);
+      --border-cyan: rgba(0,212,255,0.28); --border-amber: rgba(245,166,35,0.28); --border-red: rgba(255,80,80,0.28);
+      --text-0: #dce8fa; --text-1: #7b8fa8; --text-2: #3e5068;
+      --cyan: #00d4ff; --cyan-bg: rgba(0,212,255,0.08);
+      --amber: #f5a623; --amber-bg: rgba(245,166,35,0.08);
+      --red: #ff5555; --red-bg: rgba(255,85,85,0.08); --green: #00e0a0;
+      --mono: 'IBM Plex Mono', monospace; --serif: 'Source Serif 4', Georgia, serif; --sans: 'IBM Plex Sans', system-ui, sans-serif;
+      --r: 6px; --rl: 12px; --t: 0.18s ease; --mw: 1160px;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--sans); background: var(--bg-1); color: var(--text-0); line-height: 1.6; overflow-x: hidden; }
+    a { color: inherit; text-decoration: none; }
+    .wrap { max-width: var(--mw); margin: 0 auto; padding: 0 28px; }
+
+    /* HEADER */
+    header { position: sticky; top: 0; z-index: 100; background: rgba(8,12,24,0.92); backdrop-filter: blur(24px); border-bottom: 1px solid var(--border); }
+    nav { display: flex; align-items: center; height: 62px; }
+    .logo { display: flex; align-items: center; gap: 10px; margin-right: auto; }
+    .logo-icon { width: 30px; height: 30px; background: var(--cyan-bg); border: 1px solid var(--border-cyan); border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+    .logo-icon svg { width: 18px; height: 18px; }
+    .logo-name { font-family: var(--mono); font-size: 14px; font-weight: 600; letter-spacing: 0.08em; }
+    .logo-name .dot { color: var(--cyan); margin: 0 2px; }
+    .nav-links { display: flex; gap: 2px; list-style: none; }
+    .nav-links a { font-size: 13px; color: var(--text-1); padding: 7px 13px; border-radius: var(--r); transition: color var(--t), background var(--t); }
+    .nav-links a:hover { color: var(--text-0); background: rgba(255,255,255,0.05); }
+    .btn-sub { margin-left: 18px; font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: var(--bg-0); background: var(--cyan); padding: 8px 17px; border-radius: var(--r); transition: opacity var(--t); }
+    .btn-sub:hover { opacity: 0.82; }
+
+    /* TICKER */
+    .ticker { background: var(--bg-0); border-bottom: 1px solid var(--border); height: 33px; display: flex; align-items: center; overflow: hidden; }
+    .tick-label { flex-shrink: 0; padding: 0 14px; font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: 0.2em; color: var(--cyan); border-right: 1px solid var(--border-md); }
+    .tick-track { display: flex; gap: 60px; padding-left: 60px; white-space: nowrap; animation: tick 80s linear infinite; }
+    .tick-item { font-size: 11.5px; color: var(--text-1); display: flex; align-items: center; gap: 6px; }
+    .tick-sep { color: var(--text-2); }
+    @keyframes tick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+    /* HERO */
+    .hero { position: relative; padding: 80px 0 72px; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px); background-size: 52px 52px; }
+    .hero::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 140px; background: linear-gradient(transparent, var(--bg-1)); }
+    .hero-beam { position: absolute; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent 0%, var(--cyan) 30%, var(--cyan) 70%, transparent 100%); opacity: 0; animation: beam 8s ease-in-out infinite; }
+    @keyframes beam { 0% { top: 0%; opacity: 0; } 8% { opacity: 0.28; } 92% { opacity: 0.28; } 100% { top: 100%; opacity: 0; } }
+    .hero-inner { position: relative; z-index: 1; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.22em; color: var(--cyan); margin-bottom: 22px; }
+    .eyebrow::before { content: ''; width: 22px; height: 1px; background: var(--cyan); }
+    .hero h1 { font-family: var(--mono); font-size: clamp(2rem,5vw,3.5rem); font-weight: 600; line-height: 1.1; letter-spacing: -0.02em; max-width: 780px; margin-bottom: 20px; }
+    .hero h1 .c { color: var(--cyan); }
+    .hero-sub { font-family: var(--serif); font-size: 1.1rem; font-weight: 300; color: var(--text-1); max-width: 560px; margin-bottom: 48px; line-height: 1.75; }
+    .hero-stats { display: flex; gap: 44px; }
+    .stat-n { font-family: var(--mono); font-size: 1.9rem; font-weight: 600; line-height: 1; }
+    .stat-l { font-size: 11px; color: var(--text-2); letter-spacing: 0.06em; margin-top: 5px; }
+
+    /* SECTION HEADER */
+    .sec-head { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+    .sec-label { font-family: var(--mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.22em; color: var(--cyan); white-space: nowrap; }
+    .sec-rule { flex: 1; height: 1px; background: var(--border); }
+    .sec-more { font-family: var(--mono); font-size: 10.5px; color: var(--text-2); white-space: nowrap; transition: color var(--t); }
+    .sec-more:hover { color: var(--cyan); }
+
+    /* SUPPLY CHAIN EXPLORER */
+    .sc-section { padding: 72px 0; background: var(--bg-0); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .sc-intro { margin-bottom: 32px; }
+    .sc-intro-title { font-family: var(--mono); font-size: 1.35rem; font-weight: 600; line-height: 1.25; margin-bottom: 10px; }
+    .sc-intro-sub { font-family: var(--serif); font-size: 0.9375rem; font-weight: 300; color: var(--text-1); line-height: 1.7; max-width: 700px; }
+    .sc-search { margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+    .sc-search input { background: var(--bg-card); border: 1px solid var(--border-md); border-radius: var(--r); padding: 10px 16px; font-family: var(--mono); font-size: 13px; color: var(--text-0); outline: none; width: 340px; transition: border-color var(--t); }
+    .sc-search input::placeholder { color: var(--text-2); }
+    .sc-search input:focus { border-color: var(--border-cyan); }
+    .sc-search-note { font-family: var(--mono); font-size: 10px; color: var(--text-2); }
+
+    /* TIER PANELS */
+    #tier-container { display: flex; flex-direction: column; gap: 3px; }
+    .tier-panel { border-radius: var(--rl); overflow: hidden; border: 1px solid var(--border); transition: border-color var(--t); }
+    .tier-hd { display: flex; align-items: center; gap: 16px; padding: 18px 24px; cursor: pointer; background: var(--bg-card); transition: background var(--t); user-select: none; }
+    .tier-hd:hover { background: var(--bg-card-h); }
+    .tier-badge { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 12px; font-weight: 600; flex-shrink: 0; }
+    .tier-info { flex: 1; }
+    .tier-name { font-family: var(--mono); font-size: 13.5px; font-weight: 600; line-height: 1.2; }
+    .tier-tag { font-size: 11.5px; color: var(--text-1); margin-top: 2px; }
+    .tier-cnt { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 100px; white-space: nowrap; }
+    .tier-arrow { font-size: 13px; color: var(--text-2); transition: transform 0.25s ease; margin-left: 4px; }
+    .tier-panel.open .tier-arrow { transform: rotate(180deg); }
+    .tier-bd { display: none; padding: 22px 24px 28px; border-top: 1px solid var(--border); background: var(--bg-1); animation: fadein 0.22s ease; }
+    .tier-panel.open .tier-bd { display: block; }
+    @keyframes fadein { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+    .tier-desc { font-family: var(--serif); font-size: 0.9rem; font-weight: 300; color: var(--text-1); line-height: 1.7; margin-bottom: 18px; max-width: 780px; }
+    .co-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+    .co-chip { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 10px; padding: 3px 10px 3px 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 100px; color: var(--text-1); cursor: default; transition: color var(--t), border-color var(--t); }
+    .co-chip:hover { color: var(--tc, var(--cyan)); border-color: var(--tc, var(--cyan)); }
+    .co-cc { font-size: 9px; color: var(--text-2); font-style: normal; }
+    .co-chip.hidden { display: none; }
+    .tier-conn { display: flex; align-items: center; height: 20px; gap: 10px; margin: 1px 0; }
+    .tier-conn::before, .tier-conn::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .tier-conn span { font-family: var(--mono); font-size: 8.5px; color: var(--text-2); letter-spacing: 0.12em; white-space: nowrap; }
+
+    /* BADGES */
+    .badge { font-family: var(--mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.1em; padding: 3px 9px; border-radius: 3px; }
+    .b-c { background: var(--cyan-bg); color: var(--cyan); border: 1px solid var(--border-cyan); }
+    .b-a { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--border-amber); }
+    .b-r { background: var(--red-bg); color: var(--red); border: 1px solid var(--border-red); }
+    .art-date { font-size: 11.5px; color: var(--text-2); }
+
+    /* FEATURED */
+    .featured { padding: 64px 0; background: var(--bg-2); border-bottom: 1px solid var(--border); }
+    .feat-card { display: grid; grid-template-columns: 1fr 340px; background: var(--bg-card); border: 1px solid var(--border-md); border-radius: var(--rl); overflow: hidden; transition: border-color var(--t); cursor: pointer; }
+    .feat-card:hover { border-color: var(--border-cyan); }
+    .feat-body { padding: 44px 40px; display: flex; flex-direction: column; }
+    .feat-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .feat-title { font-family: var(--serif); font-size: 1.75rem; font-weight: 600; line-height: 1.22; margin-bottom: 14px; }
+    .feat-excerpt { font-family: var(--serif); font-size: 0.96rem; font-weight: 300; color: var(--text-1); line-height: 1.72; margin-bottom: 32px; }
+    .feat-foot { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+    .author { display: flex; align-items: center; gap: 10px; }
+    .av { width: 34px; height: 34px; border-radius: 50%; background: var(--cyan-bg); border: 1px solid var(--border-cyan); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--cyan); }
+    .av-n { font-size: 12.5px; font-weight: 500; }
+    .av-t { font-size: 11px; color: var(--text-2); margin-top: 1px; }
+    .read-link { font-family: var(--mono); font-size: 11.5px; font-weight: 600; letter-spacing: 0.06em; color: var(--cyan); display: flex; align-items: center; gap: 5px; transition: gap var(--t); }
+    .read-link:hover { gap: 10px; }
+    .feat-panel { background: var(--bg-0); border-left: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 36px 28px; position: relative; overflow: hidden; }
+    .feat-panel::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(0,212,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.025) 1px, transparent 1px); background-size: 28px 28px; }
+    .scv { width: 100%; position: relative; z-index: 1; }
+    .scv-node { display: flex; align-items: center; gap: 10px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r); padding: 9px 13px; margin-bottom: 6px; }
+    .scv-node.warn { border-color: var(--border-red); }
+    .ndot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .nlabel { font-family: var(--mono); font-size: 8.5px; color: var(--text-2); letter-spacing: 0.1em; }
+    .nname { font-family: var(--mono); font-size: 10px; font-weight: 500; margin-top: 1px; }
+    .scv-conn { width: 1px; height: 16px; margin: 0 auto 6px; }
+
+    /* NEWS */
+    .news { padding: 64px 0; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; }
+    .art-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--rl); padding: 26px 24px; display: flex; flex-direction: column; cursor: pointer; transition: border-color var(--t), background var(--t), transform var(--t); }
+    .art-card:hover { background: var(--bg-card-h); transform: translateY(-2px); }
+    .art-card.c1:hover { border-color: var(--border-cyan); }
+    .art-card.c2:hover { border-color: var(--border-amber); }
+    .art-card.c3:hover { border-color: rgba(0,224,160,0.28); }
+    .card-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .card-title { font-family: var(--serif); font-size: 1.05rem; font-weight: 600; line-height: 1.35; margin-bottom: 11px; }
+    .card-excerpt { font-family: var(--serif); font-size: 0.875rem; font-weight: 300; color: var(--text-1); line-height: 1.68; margin-bottom: 20px; }
+    .card-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .rt { font-size: 11px; color: var(--text-2); }
+    .arr { font-size: 15px; color: var(--text-2); transition: color var(--t), transform var(--t); }
+    .art-card:hover .arr { color: var(--cyan); transform: translateX(4px); }
+
+    /* TOPICS */
+    .topics { padding: 36px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--bg-2); }
+    .topics-l { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.2em; color: var(--text-2); margin-bottom: 14px; }
+    .chip-list { display: flex; flex-wrap: wrap; gap: 7px; }
+    .chip { font-family: var(--mono); font-size: 11px; padding: 5px 13px; background: var(--bg-card); border: 1px solid var(--border-md); border-radius: 100px; color: var(--text-1); cursor: pointer; transition: all var(--t); }
+    .chip:hover { color: var(--cyan); border-color: var(--border-cyan); background: var(--cyan-bg); }
+
+    /* NEWSLETTER */
+    .nl { padding: 72px 0; }
+    .nl-card { background: var(--bg-0); border: 1px solid var(--border-md); border-radius: var(--rl); padding: 52px 56px; display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; position: relative; overflow: hidden; }
+    .nl-card::after { content: ''; position: absolute; top: -80px; right: -80px; width: 360px; height: 360px; background: radial-gradient(circle, rgba(0,210,255,0.055) 0%, transparent 70%); pointer-events: none; }
+    .nl-eye { font-family: var(--mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.22em; color: var(--cyan); margin-bottom: 14px; }
+    .nl-title { font-family: var(--mono); font-size: 1.65rem; font-weight: 600; line-height: 1.2; margin-bottom: 12px; }
+    .nl-body { font-family: var(--serif); font-size: 0.9375rem; font-weight: 300; color: var(--text-1); line-height: 1.7; }
+    .nl-form { display: flex; flex-direction: column; gap: 11px; position: relative; z-index: 1; }
+    .f-in { background: var(--bg-card); border: 1px solid var(--border-md); border-radius: var(--r); padding: 11px 15px; font-family: var(--sans); font-size: 14px; color: var(--text-0); outline: none; transition: border-color var(--t); width: 100%; }
+    .f-in::placeholder { color: var(--text-2); }
+    .f-in:focus { border-color: var(--border-cyan); }
+    .f-btn { background: var(--cyan); color: var(--bg-0); border: none; border-radius: var(--r); padding: 12px 24px; font-family: var(--mono); font-size: 11.5px; font-weight: 600; letter-spacing: 0.1em; cursor: pointer; transition: opacity var(--t); text-align: left; }
+    .f-btn:hover { opacity: 0.84; }
+    .f-note { font-size: 11px; color: var(--text-2); }
+
+    /* FOOTER */
+    footer { background: var(--bg-0); border-top: 1px solid var(--border); padding: 52px 0 28px; }
+    .ft-top { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 44px; }
+    .ft-brand p { font-family: var(--serif); font-size: 0.875rem; font-weight: 300; color: var(--text-2); line-height: 1.7; margin-top: 12px; max-width: 260px; }
+    .ft-col-h { font-family: var(--mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.2em; color: var(--text-2); margin-bottom: 14px; }
+    .ft-links { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+    .ft-links a { font-size: 13px; color: var(--text-1); transition: color var(--t); }
+    .ft-links a:hover { color: var(--cyan); }
+    .ft-bot { border-top: 1px solid var(--border); padding-top: 22px; display: flex; align-items: center; justify-content: space-between; }
+    .ft-copy { font-family: var(--mono); font-size: 10.5px; color: var(--text-2); }
+    .ft-soc { display: flex; gap: 8px; }
+    .soc-btn { width: 30px; height: 30px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-2); cursor: pointer; transition: all var(--t); }
+    .soc-btn:hover { color: var(--cyan); border-color: var(--border-cyan); background: var(--cyan-bg); }
+
+    @media (max-width: 900px) { .feat-card { grid-template-columns: 1fr; } .feat-panel { display: none; } .grid-3 { grid-template-columns: repeat(2,1fr); } .nl-card { grid-template-columns: 1fr; gap: 36px; padding: 36px 28px; } .ft-top { grid-template-columns: 1fr 1fr; gap: 32px; } }
+    @media (max-width: 600px) { .grid-3 { grid-template-columns: 1fr; } .nav-links { display: none; } .hero-stats { gap: 28px; } .ft-top { grid-template-columns: 1fr; } .sc-search input { width: 100%; } }
+  </style>
 </head>
-<body style="background:black;color:white;font-family:sans-serif;text-align:center;padding-top:100px;">
-  <h1>Welcome to Beamed Silicon</h1>
-  <p>MEOW</p>
+<body>
+
+<header>
+  <div class="wrap">
+    <nav>
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="5.5" y="5.5" width="7" height="7" rx="1" stroke="#00d4ff" stroke-width="1.2"/>
+            <line x1="9" y1="0" x2="9" y2="4.5" stroke="#00d4ff" stroke-width="1"/>
+            <line x1="9" y1="13.5" x2="9" y2="18" stroke="#00d4ff" stroke-width="1"/>
+            <line x1="0" y1="9" x2="4.5" y2="9" stroke="#00d4ff" stroke-width="1"/>
+            <line x1="13.5" y1="9" x2="18" y2="9" stroke="#00d4ff" stroke-width="1"/>
+            <line x1="2" y1="2" x2="5" y2="5" stroke="#00d4ff" stroke-width="0.8" opacity="0.45"/>
+            <line x1="13" y1="5" x2="16" y2="2" stroke="#00d4ff" stroke-width="0.8" opacity="0.45"/>
+            <line x1="5" y1="13" x2="2" y2="16" stroke="#00d4ff" stroke-width="0.8" opacity="0.45"/>
+            <line x1="13" y1="13" x2="16" y2="16" stroke="#00d4ff" stroke-width="0.8" opacity="0.45"/>
+          </svg>
+        </div>
+        <span class="logo-name">BEAMED<span class="dot">·</span>SILICON</span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#">News</a></li>
+        <li><a href="#sc-map">Supply Chain</a></li>
+        <li><a href="#">Companies</a></li>
+        <li><a href="#">Markets</a></li>
+        <li><a href="#">Policy</a></li>
+      </ul>
+      <a href="#newsletter" class="btn-sub">SUBSCRIBE</a>
+    </nav>
+  </div>
+</header>
+
+<div class="ticker">
+  <div class="tick-label">350 COMPANIES</div>
+  <div class="tick-track">
+    <span class="tick-item">TSMC <span class="tick-sep">·</span> N2 Ramp</span>
+    <span class="tick-item">ASML <span class="tick-sep">·</span> High-NA EUV</span>
+    <span class="tick-item">Nvidia <span class="tick-sep">·</span> GB300 Demand</span>
+    <span class="tick-item">SK Hynix <span class="tick-sep">·</span> HBM4 Sampling</span>
+    <span class="tick-item">Carl Zeiss SMT <span class="tick-sep">·</span> Lens Block Lead Times</span>
+    <span class="tick-item">TRUMPF <span class="tick-sep">·</span> EUV Laser Capacity</span>
+    <span class="tick-item">Shin-Etsu Chemical <span class="tick-sep">·</span> Photoresist Supply</span>
+    <span class="tick-item">Ajinomoto Fine-Techno <span class="tick-sep">·</span> ABF Allocation</span>
+    <span class="tick-item">Sibelco <span class="tick-sep">·</span> Spruce Pine Quartz</span>
+    <span class="tick-item">Intel Foundry <span class="tick-sep">·</span> 18A Yield</span>
+    <span class="tick-item">Applied Materials <span class="tick-sep">·</span> 14-Month Lead Times</span>
+    <span class="tick-item">Entegris <span class="tick-sep">·</span> Contamination Filters</span>
+    <span class="tick-item">GlobalWafers <span class="tick-sep">·</span> SOI Substrate Supply</span>
+    <span class="tick-item">Lam Research <span class="tick-sep">·</span> Plasma Etch Orders</span>
+    <span class="tick-item">Hanmi Semiconductor <span class="tick-sep">·</span> TC Bonder Demand</span>
+    <span class="tick-item">TSMC <span class="tick-sep">·</span> N2 Ramp</span>
+    <span class="tick-item">ASML <span class="tick-sep">·</span> High-NA EUV</span>
+    <span class="tick-item">Nvidia <span class="tick-sep">·</span> GB300 Demand</span>
+    <span class="tick-item">SK Hynix <span class="tick-sep">·</span> HBM4 Sampling</span>
+    <span class="tick-item">Carl Zeiss SMT <span class="tick-sep">·</span> Lens Block Lead Times</span>
+    <span class="tick-item">TRUMPF <span class="tick-sep">·</span> EUV Laser Capacity</span>
+    <span class="tick-item">Shin-Etsu Chemical <span class="tick-sep">·</span> Photoresist Supply</span>
+    <span class="tick-item">Ajinomoto Fine-Techno <span class="tick-sep">·</span> ABF Allocation</span>
+    <span class="tick-item">Sibelco <span class="tick-sep">·</span> Spruce Pine Quartz</span>
+    <span class="tick-item">Intel Foundry <span class="tick-sep">·</span> 18A Yield</span>
+    <span class="tick-item">Applied Materials <span class="tick-sep">·</span> 14-Month Lead Times</span>
+    <span class="tick-item">Entegris <span class="tick-sep">·</span> Contamination Filters</span>
+    <span class="tick-item">GlobalWafers <span class="tick-sep">·</span> SOI Substrate Supply</span>
+    <span class="tick-item">Lam Research <span class="tick-sep">·</span> Plasma Etch Orders</span>
+    <span class="tick-item">Hanmi Semiconductor <span class="tick-sep">·</span> TC Bonder Demand</span>
+  </div>
+</div>
+
+<main>
+  <section class="hero">
+    <div class="hero-beam"></div>
+    <div class="wrap hero-inner">
+      <div class="eyebrow">THE DEFINITIVE SEMICONDUCTOR INTELLIGENCE PLATFORM</div>
+      <h1>Every Tier of the<br>Semiconductor Universe,<br><span class="c">Mapped &amp; Tracked</span></h1>
+      <p class="hero-sub">350 companies. 7 supply chain tiers. From the quartz mines of North Carolina to the AI accelerators in your data center. The world's most complete semiconductor knowledge base — updated daily.</p>
+      <div class="hero-stats">
+        <div><div class="stat-n">350</div><div class="stat-l">COMPANIES TRACKED</div></div>
+        <div><div class="stat-n">7</div><div class="stat-l">SUPPLY CHAIN TIERS</div></div>
+        <div><div class="stat-n">22+</div><div class="stat-l">COUNTRIES COVERED</div></div>
+        <div><div class="stat-n">Daily</div><div class="stat-l">NEWS UPDATES</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sc-section" id="sc-map">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-label">SUPPLY CHAIN EXPLORER</span>
+        <div class="sec-rule"></div>
+        <a href="#" class="sec-more">FULL DATABASE →</a>
+      </div>
+      <div class="sc-intro">
+        <div class="sc-intro-title">The Complete Semiconductor Supply Chain</div>
+        <p class="sc-intro-sub">Mapping 350 critical companies across 7 distinct tiers reveals the web of dependencies that every chip — from edge AI to mainframe — relies on. Click any tier to explore all companies. Search by name to find any company instantly.</p>
+      </div>
+      <div class="sc-search">
+        <input type="text" id="co-search" placeholder="Search 350 companies..." oninput="filterCos(this.value)">
+        <span class="sc-search-note" id="search-note"></span>
+      </div>
+      <div id="tier-container"></div>
+    </div>
+  </section>
+
+  <section class="featured">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-label">FEATURED ANALYSIS</span>
+        <div class="sec-rule"></div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-body">
+          <div class="feat-meta">
+            <span class="badge b-c">EQUIPMENT</span>
+            <span class="badge b-a">SUPPLY RISK</span>
+            <span class="art-date">May 28, 2026</span>
+          </div>
+          <h2 class="feat-title">ASML's High-NA EUV Ramp: What the 10th EXE:5000 Delivery Means for TSMC and Intel Foundry</h2>
+          <p class="feat-excerpt">Every ASML EUV machine depends on Carl Zeiss SMT for its lens block and TRUMPF for the CO₂ laser that generates EUV light — a two-supplier constraint that governs the entire lithography roadmap. As TSMC places orders for N2-class High-NA tooling and Intel Foundry races to qualify 18A, we examine the optics and laser supply chain that will determine which fab wins advanced node leadership through 2028.</p>
+          <div class="feat-foot">
+            <div class="author">
+              <div class="av">SR</div>
+              <div><div class="av-n">Soren Rathmann</div><div class="av-t">Equipment &amp; Lithography Analyst</div></div>
+            </div>
+            <a href="#" class="read-link">READ ANALYSIS →</a>
+          </div>
+        </div>
+        <div class="feat-panel">
+          <div class="scv">
+            <div class="scv-node"><div class="ndot" style="background:#f5a623"></div><div><div class="nlabel">LASER — LEVEL 4</div><div class="nname">TRUMPF CO₂ Driver Laser</div></div></div>
+            <div class="scv-conn" style="background:linear-gradient(#f5a623,#9b7cff);width:1px;height:16px;margin:0 auto 6px"></div>
+            <div class="scv-node"><div class="ndot" style="background:#9b7cff"></div><div><div class="nlabel">OPTICS — LEVEL 4</div><div class="nname">Carl Zeiss SMT Lens Block</div></div></div>
+            <div class="scv-conn" style="background:linear-gradient(#9b7cff,#c77dff);width:1px;height:16px;margin:0 auto 6px"></div>
+            <div class="scv-node"><div class="ndot" style="background:#c77dff"></div><div><div class="nlabel">TOOL — LEVEL 3</div><div class="nname">ASML TWINSCAN EXE:5000</div></div></div>
+            <div class="scv-conn" style="background:linear-gradient(#c77dff,#4a9eff);width:1px;height:16px;margin:0 auto 6px"></div>
+            <div class="scv-node"><div class="ndot" style="background:#4a9eff"></div><div><div class="nlabel">FOUNDRY — LEVEL 2</div><div class="nname">TSMC N2 / Intel Foundry 18A</div></div></div>
+            <div class="scv-conn" style="background:linear-gradient(#4a9eff,#00d4ff);width:1px;height:16px;margin:0 auto 6px"></div>
+            <div class="scv-node"><div class="ndot" style="background:#00d4ff"></div><div><div class="nlabel">CHIP DESIGNER — LEVEL 1</div><div class="nname">Nvidia · Apple · AMD · AWS</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="news">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-label">LATEST NEWS</span>
+        <div class="sec-rule"></div>
+        <a href="#" class="sec-more">ALL STORIES →</a>
+      </div>
+      <div class="grid-3">
+        <div class="art-card c1">
+          <div class="card-meta"><span class="badge b-c">MEMORY</span><span class="art-date">May 26, 2026</span></div>
+          <h3 class="card-title">Samsung vs SK Hynix: Who Controls the AI Memory Stack in 2026</h3>
+          <p class="card-excerpt">Both Samsung Foundry and SK Hynix are racing to supply HBM4 to Nvidia and AMD — but thermal compression bonding yield at Hanmi Semiconductor is becoming the deciding variable.</p>
+          <div class="card-foot"><span class="rt">10 min read</span><span class="arr">→</span></div>
+        </div>
+        <div class="art-card c2">
+          <div class="card-meta"><span class="badge b-a">MATERIALS</span><span class="art-date">May 23, 2026</span></div>
+          <h3 class="card-title">Ajinomoto's ABF Film Monopoly: The Single-Source Risk in Every Advanced Package</h3>
+          <p class="card-excerpt">Every Intel, TSMC, and AMD package using flip-chip BGA requires Ajinomoto Build-up Film. There is no qualified substitute. We map the scale of this extraordinary single-source dependency.</p>
+          <div class="card-foot"><span class="rt">8 min read</span><span class="arr">→</span></div>
+        </div>
+        <div class="art-card c3">
+          <div class="card-meta"><span class="badge b-r">GEOPOLITICS</span><span class="art-date">May 20, 2026</span></div>
+          <h3 class="card-title">China's Equipment Independence Race: Naura, AMEC, and the 14nm Ceiling</h3>
+          <p class="card-excerpt">Naura Technology Group and AMEC are China's answer to Applied Materials and Lam Research. We assess how far domestic CVD and etch tools have come — and where the hard ceiling remains.</p>
+          <div class="card-foot"><span class="rt">14 min read</span><span class="arr">→</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="topics">
+    <div class="wrap">
+      <div class="topics-l">EXPLORE BY TOPIC</div>
+      <div class="chip-list">
+        <span class="chip">Logic Nodes</span><span class="chip">HBM &amp; Memory</span><span class="chip">Advanced Packaging</span>
+        <span class="chip">EUV Lithography</span><span class="chip">Export Controls</span><span class="chip">CHIPS Act</span>
+        <span class="chip">China Fabs</span><span class="chip">TSMC</span><span class="chip">ASML</span>
+        <span class="chip">Nvidia</span><span class="chip">Samsung Foundry</span><span class="chip">Intel Foundry</span>
+        <span class="chip">Rare Earth Minerals</span><span class="chip">Photoresists</span><span class="chip">Wafer Economics</span>
+        <span class="chip">AI Accelerators</span><span class="chip">Silicon Carbide</span><span class="chip">CoWoS / SoIC</span>
+        <span class="chip">Reshoring</span><span class="chip">RISC-V</span><span class="chip">Polysilicon</span><span class="chip">Vacuum Systems</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="nl" id="newsletter">
+    <div class="wrap">
+      <div class="nl-card">
+        <div>
+          <div class="nl-eye">BEAMED SILICON BRIEFING</div>
+          <h2 class="nl-title">The complete supply chain, in your inbox</h2>
+          <p class="nl-body">Weekly: deep-dive analysis on fabs, equipment, materials, and policy — covering all 7 supply chain tiers and all 350 companies. Used by procurement leads, investors, and engineers at the world's leading semiconductor companies.</p>
+        </div>
+        <div class="nl-form">
+          <input class="f-in" type="text" placeholder="Your name">
+          <input class="f-in" type="email" placeholder="Work email address">
+          <button class="f-btn">SUBSCRIBE FREE →</button>
+          <p class="f-note">No spam. Unsubscribe anytime. Read by 22,000+ semiconductor professionals.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="ft-top">
+      <div class="ft-brand">
+        <span class="logo-name">BEAMED<span class="dot">·</span>SILICON</span>
+        <p>The world's most complete semiconductor intelligence — 350 companies, 7 tiers, from rare earth mines to finished silicon.</p>
+      </div>
+      <div>
+        <div class="ft-col-h">COVERAGE</div>
+        <ul class="ft-links">
+          <li><a href="#">Fabless &amp; Design</a></li><li><a href="#">Foundries &amp; OSATs</a></li>
+          <li><a href="#">Equipment (SME)</a></li><li><a href="#">Materials &amp; Gases</a></li>
+          <li><a href="#">Mining &amp; Extraction</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="ft-col-h">REGIONS</div>
+        <ul class="ft-links">
+          <li><a href="#">East Asia</a></li><li><a href="#">United States</a></li>
+          <li><a href="#">Europe</a></li><li><a href="#">Southeast Asia</a></li><li><a href="#">Rest of World</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="ft-col-h">COMPANY</div>
+        <ul class="ft-links">
+          <li><a href="#">About</a></li><li><a href="#">Analysts</a></li>
+          <li><a href="#">Advertise</a></li><li><a href="#">Privacy</a></li><li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="ft-bot">
+      <div class="ft-copy">© 2026 Beamed Silicon Intelligence. All rights reserved.</div>
+      <div class="ft-soc">
+        <a href="#" class="soc-btn">𝕏</a><a href="#" class="soc-btn">in</a><a href="#" class="soc-btn">RSS</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+const TIERS = [
+  {
+    level:1, name:"Fabless Designers & Tech Architects", tag:"The Brains — Design without factories",
+    color:"#00d4ff", cbg:"rgba(0,212,255,0.08)", cbr:"rgba(0,212,255,0.28)",
+    desc:"These companies do not own chip factories. They design the architecture, logic, and instruction sets for semiconductors, or buy them at enterprise scale to build consumer electronics and cloud servers.",
+    cos:[
+      ["Nvidia","US"],["AMD","US"],["Apple","US"],["Qualcomm","US"],["Broadcom","US"],
+      ["MediaTek","TW"],["Marvell Technology","US"],["Amazon Web Services","US"],["Google","US"],["Microsoft","US"],
+      ["Meta Platforms","US"],["Tesla","US"],["Cisco Systems","US"],["IBM","US"],["Realtek Semiconductor","TW"],
+      ["Novatek Microelectronics","TW"],["Cirrus Logic","US"],["Skyworks Solutions","US"],["Qorvo","US"],["Monolithic Power Systems","US"],
+      ["Ambarella","US"],["Lattice Semiconductor","US"],["Altera","US"],["Synaptics","US"],["Wolfspeed","US"],
+      ["Nordic Semiconductor","NO"],["Macom Technology Solutions","US"],["Semtech","US"],["MaxLinear","US"],["Allegro MicroSystems","US"],
+      ["Rambus","US"],["CEVA","US"],["Silicon Laboratories","US"],["OmniVision Technologies","US"],["Himax Technologies","TW"],
+      ["Unisoc","CN"],["HiSilicon","CN"],["Graphcore","UK"],["Tenstorrent","CA"],["Cerebras Systems","US"],
+      ["SambaNova Systems","US"],["Groq","US"],["SiFive","US"],["Enfusion","US"],["Syntiant","US"],
+      ["Esperanto Technologies","US"],["Hailo","IL"],["Untether AI","CA"],["BrainChip","AU"],["Mythic","US"]
+    ]
+  },
+  {
+    level:2, name:"Foundries, IDMs, & OSATs", tag:"The Fabs & Assembly — Physical manufacturing",
+    color:"#4a9eff", cbg:"rgba(74,158,255,0.08)", cbr:"rgba(74,158,255,0.28)",
+    desc:"Integrated Device Manufacturers (IDMs) design and make their own chips. Pure-play foundries build chips for others. OSATs (Outsourced Semiconductor Assembly and Test) handle advanced packaging, cutting, and sorting of finished dies.",
+    cos:[
+      ["TSMC","TW"],["Samsung Foundry","KR"],["Intel Foundry","US"],["SK Hynix","KR"],["Micron Technology","US"],
+      ["GlobalFoundries","US"],["UMC","TW"],["SMIC","CN"],["Texas Instruments","US"],["STMicroelectronics","CH"],
+      ["Infineon Technologies","DE"],["NXP Semiconductors","NL"],["Analog Devices","US"],["Renesas Electronics","JP"],["Microchip Technology","US"],
+      ["onsemi","US"],["Sony Semiconductor Solutions","JP"],["Kioxia","JP"],["Tower Semiconductor","IL"],["VIS","TW"],
+      ["Hua Hong Semiconductor","CN"],["ASE Group","TW"],["Amkor Technology","US"],["JCET Group","CN"],["Powertech Technology","TW"],
+      ["SPIL","TW"],["King Yuan Electronics","TW"],["TFME","CN"],["Tianshui Huatian Technology","CN"],["UTAC Group","SG"],
+      ["ChipMOS Technologies","TW"],["Chipbond Technology","TW"],["Signetics","KR"],["Hana Micron","KR"],["SFA Semicon","KR"],
+      ["Win Semiconductors","TW"],["AWSC","TW"],["DB Hitek","KR"],["Nexchip","CN"],["Fujitsu Semiconductor","JP"],
+      ["Toshiba Electronic Devices","JP"],["Rohm Semiconductor","JP"],["SkyWater Technology","US"],["JS Foundry","JP"],["Bosch Semiconductors","DE"],
+      ["SanAn IC","CN"],["X-Fab","DE"],["United Power Research","TW"],["Greatek Electronics","TW"],["Lingsen Precision Industries","TW"]
+    ]
+  },
+  {
+    level:3, name:"Semiconductor Manufacturing Equipment (SME) Integrators", tag:"The Machines — Cleanroom toolmakers",
+    color:"#9b7cff", cbg:"rgba(155,124,255,0.08)", cbr:"rgba(155,124,255,0.28)",
+    desc:"These companies build the physical, room-sized machines that populate cleanrooms: tools for lithography, thin-film deposition, chemical mechanical planarization, plasma etching, and diagnostic wafer inspection.",
+    cos:[
+      ["ASML","NL"],["Applied Materials","US"],["Lam Research","US"],["Tokyo Electron","JP"],["KLA Corporation","US"],
+      ["Nikon Corporation","JP"],["Canon Inc.","JP"],["Screen Holdings","JP"],["ASM International","NL"],["Hitachi High-Tech","JP"],
+      ["Advantest","JP"],["Teradyne","US"],["Kokusai Electric","JP"],["Onto Innovation","US"],["Veeco Instruments","US"],
+      ["EV Group","AT"],["BE Semiconductor Industries","NL"],["Plasma-Therm","US"],["Kulicke & Soffa","SG"],["Suss MicroTec","DE"],
+      ["Daifuku","JP"],["Murata Machinery","JP"],["Shinkawa","JP"],["ASM Pacific Technology","SG"],["Towa Corporation","JP"],
+      ["Disco Corporation","JP"],["Tokyo Seimitsu","JP"],["Okamoto Machine Tool Works","JP"],["Semes","KR"],["Wonik IPS","KR"],
+      ["Eugene Technology","KR"],["Hanmi Semiconductor","KR"],["JUSUNG Engineering","KR"],["Naura Technology Group","CN"],["AMEC","CN"],
+      ["Piotech","CN"],["Kingsemi","CN"],["ACM Research","US"],["JEOL Ltd.","JP"],["Park Systems","KR"],
+      ["FormFactor","US"],["Technoprobe","IT"],["Cohu","US"],["Camtek","IL"],["Nordson Corporation","US"],
+      ["IPG Photonics","US"],["Mattson Technology","US"],["Axcelis Technologies","US"],["Amtech Systems","US"],["Nova Measuring Instruments","IL"]
+    ]
+  },
+  {
+    level:4, name:"Tier-1 Equipment Subsystems & Modules", tag:"The Organs — Vital internal components",
+    color:"#c77dff", cbg:"rgba(199,125,255,0.08)", cbr:"rgba(199,125,255,0.28)",
+    desc:"These engineering firms build the vital organs inside Level 3 machines: lasers, optical blocks, vacuum lines, gas delivery systems, and precision robotic units. Without these sub-assemblies, lithography and etching tools cannot operate.",
+    cos:[
+      ["Carl Zeiss SMT","DE"],["TRUMPF","DE"],["VDL Groep","NL"],["MKS Instruments","US"],["Advanced Energy","US"],
+      ["Horiba","JP"],["Brooks Automation","US"],["Cymer","US"],["Gigaphoton","JP"],["Entegris","US"],
+      ["Comet Group","CH"],["Ushio","JP"],["Coherent","US"],["Energetiq Technology","US"],["Newport Corporation","US"],
+      ["Excelitas Technologies","US"],["Jenoptik","DE"],["Leybold","DE"],["Kashiyama Industries","JP"],["Kinetics Fluid Systems","US"],
+      ["Ultra Clean Holdings","US"],["Ichor Systems","US"],["Swagelok","US"],["Parker Hannifin","US"],["SMC Corporation","JP"],
+      ["Festo","DE"],["CKD Corporation","JP"],["Moog Inc.","US"],["Yaskawa Electric","JP"],["Fanuc","JP"],
+      ["Harmonic Drive Systems","JP"],["Nabtesco Corporation","JP"],["THK Co. Ltd.","JP"],["NSK Ltd.","JP"],["NTN Corporation","JP"],
+      ["SKF Group","SE"],["Kyosan Electric","JP"],["Daihen Corporation","JP"],["Spellman High Voltage","US"],["XP Power","UK"],
+      ["Bürkert Fluid Control Systems","DE"],["Bronkhorst High-Tech","NL"],["Aalborg Instruments","US"],["Teledyne Hastings","US"],["Inficon","CH"],
+      ["Hiden Analytical","UK"],["Edwards Vacuum Subsystems","UK"],["VAT Vacuum Valves","CH"],["Pfeiffer Vacuum","DE"],["Ebara Corporation","JP"]
+    ]
+  },
+  {
+    level:5, name:"Tier-2 Precision Components & Opto-Mechatronics", tag:"The Cells — Raw mechanical & optical elements",
+    color:"#00e0a0", cbg:"rgba(0,224,160,0.08)", cbr:"rgba(0,224,160,0.28)",
+    desc:"These companies manufacture the raw mechanical components, specialized structural glass, positioning units, and electronics required by Level 4 subsystem creators — including mirror substrates, piezoelectric stages, optical encoders, and specialty elastomer seals.",
+    cos:[
+      ["Schott AG","DE"],["Corning Inc.","US"],["Hoya Corporation","JP"],["Berliner Glas","DE"],["NTS-Group","NL"],
+      ["Frencken Group","NL"],["Prodrive Technologies","NL"],["Access Laser","US"],["AMPHOS","DE"],["PI Physik Instrumente","DE"],
+      ["Heidenhain","DE"],["Renishaw","UK"],["Kyocera Corporation","JP"],["CoorsTek","US"],["FerroTec","JP"],
+      ["PM Group","NL"],["KMWE","NL"],["AAE bv","NL"],["Neways Electronics","NL"],["AGC Inc.","JP"],
+      ["Tosoh Quartz","JP"],["Heraeus Conamic","DE"],["Shin-Etsu Quartz","JP"],["Saint-Gobain Performance Plastics","FR"],["Greene Tweed","US"],
+      ["DuPont Kalrez","US"],["Parker Hannifin Parofluor","US"],["Techno Semi","JP"],["Miyha","JP"],["Edmund Optics","US"],
+      ["Thorlabs","US"],["Newport Optics","US"],["Materion","US"],["Ophir Optronics","IL"],["Mitutoyo","JP"],
+      ["Magnescale","JP"],["Tamagawa Seiki","JP"],["Kugler GmbH","DE"],["Aerotech Inc.","US"],["Dover Motion","US"],
+      ["Celera Motion","US"],["Maxon Motor","CH"],["Faulhaber","DE"],["Oriental Motor","JP"],["Tamagawa Electronics","JP"],
+      ["Huber+Suhner","CH"],["Rosenberger","DE"],["Hirose Electric","JP"],["Samtec","US"],["TDK-Lambda","JP"]
+    ]
+  },
+  {
+    level:6, name:"High-Purity Process Materials, Gases, & Substrates", tag:"The Consumables — What fabs burn through daily",
+    color:"#f5a623", cbg:"rgba(245,166,35,0.08)", cbr:"rgba(245,166,35,0.28)",
+    desc:"These chemical and material firms supply the consumable assets that feed Level 2 fabs: raw silicon wafers, light-sensitive photoresists, polishing slurries, advanced packaging substrates, and specialty process gases.",
+    cos:[
+      ["Shin-Etsu Chemical","JP"],["Sumco Corporation","JP"],["Siltronic AG","DE"],["GlobalWafers","TW"],["SK Siltron","KR"],
+      ["JSR Corporation","JP"],["Tokyo Ohka Kogyo","JP"],["DuPont Electronic Solutions","US"],["Merck KGaA","DE"],["Fujifilm Electronic Materials","JP"],
+      ["Sumitomo Chemical","JP"],["Linde plc","UK"],["Air Liquide","FR"],["Taiyo Nippon Sanso","JP"],["Resonac","JP"],
+      ["BASF Electronic Materials","DE"],["Umicore","BE"],["JX Nippon Mining & Metals","JP"],["Honeywell Electronic Materials","US"],["Shinko Electric Industries","JP"],
+      ["Ibiden Co. Ltd.","JP"],["Unimicron Technology","TW"],["Nan Ya PCB","TW"],["Kinsus Interconnect Technology","TW"],["AT&S","AT"],
+      ["Ajinomoto Fine-Techno","JP"],["Kanto Chemical","JP"],["Chang Chun Petrochemical","TW"],["SoulBrain","KR"],["Dongjin Semichem","KR"],
+      ["Adeka Corporation","JP"],["Air Products and Chemicals","US"],["Matheson Tri-Gas","US"],["SK Materials","KR"],["Peric Special Gases","CN"],
+      ["Huate Gas","CN"],["Nata Optoelectronic","CN"],["Messer Group","DE"],["Solvay","BE"],["Arkema","FR"],
+      ["MacDermid Alpha Electronics","US"],["Tanaka Precious Metals","JP"],["Heraeus Electronics","DE"],["Tatsuta Electric Wire & Cable","JP"],["Nitto Denko","JP"],
+      ["Lintec Corporation","JP"],["Sekisui Chemical","JP"],["Namics Corporation","JP"],["Dexerials Corporation","JP"],["Henkel Electronic Materials","DE"]
+    ]
+  },
+  {
+    level:7, name:"Commodity Extraction, Metallurgical Refining, & Precursors", tag:"The Earth — Mines, minerals, and raw chemistry",
+    color:"#ff6b35", cbg:"rgba(255,107,53,0.08)", cbr:"rgba(255,107,53,0.28)",
+    desc:"The absolute bedrock tier. These entities handle raw mining of earth minerals, chemical cracking, and elementary processing that feed the Level 6 chemical formulation companies. Without these, no silicon wafer can be grown.",
+    cos:[
+      ["Sibelco","BE"],["The Quartz Corp","NO"],["Wacker Chemie","DE"],["OCI Company","KR"],["Hemlock Semiconductor","US"],
+      ["Tokuyama Corporation","JP"],["REC Silicon","NO"],["GCL Technology","CN"],["Tongwei Co.","CN"],["Daqo New Energy","CN"],
+      ["Lynas Rare Earths","AU"],["MP Materials","US"],["China Rare Earth Group","CN"],["Iluka Resources","AU"],["Tronox","US"],
+      ["Rio Tinto","UK"],["BHP Group","AU"],["Freeport-McMoRan","US"],["Antofagasta plc","CL"],["Southern Copper Corporation","US"],
+      ["Glencore","CH"],["Norilsk Nickel","RU"],["Anglo American","UK"],["Vale S.A.","BR"],["Alcoa Corporation","US"],
+      ["Rio Tinto Alcan","CA"],["Norsk Hydro","NO"],["Sumitomo Metal Mining","JP"],["Mitsubishi Materials","JP"],["Compass Minerals","US"],
+      ["Albemarle Corporation","US"],["SQM","CL"],["FMC Corporation","US"],["Dow Chemical","US"],["ExxonMobil Chemical","US"],
+      ["Shell Chemical","NL"],["Sabic","SA"],["Denka Company","JP"],["Tokai Carbon","JP"],["Toyo Tanso","JP"],
+      ["Showa Denko Carbon","JP"],["Stella Chemifa","JP"],["Morita Chemical Industries","JP"],["Solvay Fluor","DE"],["Fluor Corporation","US"],
+      ["Chemours","US"],["Asahi Kasei","JP"],["Tosoh Corporation","JP"],["Mitsui Chemicals","JP"],["Chevron Phillips Chemical","US"]
+    ]
+  }
+];
+
+function buildTiers() {
+  const container = document.getElementById('tier-container');
+  TIERS.forEach((tier, idx) => {
+    const panel = document.createElement('div');
+    panel.className = 'tier-panel';
+    panel.id = 'tier-' + tier.level;
+
+    const chips = tier.cos.map(([name, cc]) =>
+      `<span class="co-chip" data-name="${name.toLowerCase()}" style="--tc:${tier.color}">
+        ${name}<em class="co-cc">${cc}</em>
+      </span>`
+    ).join('');
+
+    panel.innerHTML = `
+      <div class="tier-hd" onclick="toggleTier(this)">
+        <div class="tier-badge" style="background:${tier.cbg};color:${tier.color};border:1px solid ${tier.cbr}">L${tier.level}</div>
+        <div class="tier-info">
+          <div class="tier-name" style="color:${tier.color}">${tier.name}</div>
+          <div class="tier-tag">${tier.tag}</div>
+        </div>
+        <div class="tier-cnt" style="background:${tier.cbg};color:${tier.color};border:1px solid ${tier.cbr}">${tier.cos.length} companies</div>
+        <div class="tier-arrow">↓</div>
+      </div>
+      <div class="tier-bd">
+        <p class="tier-desc">${tier.desc}</p>
+        <div class="co-grid">${chips}</div>
+      </div>`;
+    container.appendChild(panel);
+
+    if (idx < TIERS.length - 1) {
+      const conn = document.createElement('div');
+      conn.className = 'tier-conn';
+      conn.innerHTML = '<span>↓ SUPPLIES INTO</span>';
+      container.appendChild(conn);
+    }
+  });
+}
+
+function toggleTier(hd) {
+  hd.closest('.tier-panel').classList.toggle('open');
+}
+
+function filterCos(q) {
+  q = q.toLowerCase().trim();
+  const note = document.getElementById('search-note');
+  if (!q) {
+    document.querySelectorAll('.tier-panel').forEach(p => p.classList.remove('open'));
+    document.querySelectorAll('.co-chip').forEach(c => c.classList.remove('hidden'));
+    note.textContent = '';
+    return;
+  }
+  let total = 0;
+  document.querySelectorAll('.tier-panel').forEach(panel => {
+    let matches = 0;
+    panel.querySelectorAll('.co-chip').forEach(chip => {
+      const hit = chip.dataset.name.includes(q);
+      chip.classList.toggle('hidden', !hit);
+      if (hit) matches++;
+    });
+    panel.classList.toggle('open', matches > 0);
+    total += matches;
+  });
+  note.textContent = total ? `${total} result${total !== 1 ? 's' : ''} found` : 'No results';
+}
+
+buildTiers();
+</script>
 </body>
 </html>
