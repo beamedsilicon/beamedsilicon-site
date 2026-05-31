@@ -29,7 +29,7 @@ export const TIERS: Tier[] = [
       ["MediaTek", "TW", "https://www.mediatek.com"],
       ["Marvell Technology", "US", "https://www.marvell.com"],
       ["Amazon Web Services", "US", "https://aws.amazon.com"],
-      ["Google", "US", "https://google.com"],
+      ["Google", "US", "https://about.google"],
       ["Microsoft", "US", "https://www.microsoft.com"],
       ["Meta Platforms", "US", "https://about.meta.com"],
       ["Tesla", "US", "https://www.tesla.com"],
