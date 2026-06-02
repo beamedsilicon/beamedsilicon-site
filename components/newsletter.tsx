@@ -12,38 +12,50 @@ export function Newsletter() {
               semiconductor companies.
             </p>
           </div>
+          {/* FIX: Added <label> elements for screen reader accessibility.
+              Labels are visually hidden via .sr-only but present in the a11y tree. */}
           <form
-  className="nl-form"
-  action="https://formspree.io/f/mdajrgwa"
-  method="POST"
->
-  <input
-    className="f-in"
-    type="text"
-    name="name"
-    placeholder="Your name"
-    required
-  />
+            className="nl-form"
+            action="https://formspree.io/f/mdajrgwa"
+            method="POST"
+          >
+            <div className="f-field">
+              <label className="sr-only" htmlFor="nl-name">Your name</label>
+              <input
+                id="nl-name"
+                className="f-in"
+                type="text"
+                name="name"
+                placeholder="Your name"
+                autoComplete="name"
+                required
+              />
+            </div>
 
-  <input
-    className="f-in"
-    type="email"
-    name="email"
-    placeholder="Work email address"
-    required
-  />
+            <div className="f-field">
+              <label className="sr-only" htmlFor="nl-email">Work email address</label>
+              <input
+                id="nl-email"
+                className="f-in"
+                type="email"
+                name="email"
+                placeholder="Work email address"
+                autoComplete="email"
+                required
+              />
+            </div>
 
-  <button
-    className="f-btn"
-    type="submit"
-  >
-    SUBSCRIBE FREE →
-  </button>
+            <button
+              className="f-btn"
+              type="submit"
+            >
+              SUBSCRIBE FREE →
+            </button>
 
-  <p className="f-note">
-    No spam. Unsubscribe anytime. Read by 22,000+ semiconductor professionals.
-  </p>
-</form>
+            <p className="f-note">
+              No spam. Unsubscribe anytime. Read by 22,000+ semiconductor professionals.
+            </p>
+          </form>
         </div>
       </div>
     </section>

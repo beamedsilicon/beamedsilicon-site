@@ -22,7 +22,6 @@ export function CompanyChip({ company, color, cbg, hidden }: CompanyChipProps) {
     ]
   }, [url])
 
-  // -1 .. sources.length-1 ; once it exceeds the last source we render the letter fallback.
   const [srcIndex, setSrcIndex] = useState(0)
   const failed = srcIndex >= sources.length
   const firstLetter = name.charAt(0).toUpperCase()
@@ -41,17 +40,27 @@ export function CompanyChip({ company, color, cbg, hidden }: CompanyChipProps) {
           <img
             src={sources[srcIndex] || "/placeholder.svg"}
             alt=""
+            loading="lazy"
+            width={18}
+            height={18}
             onError={() => setSrcIndex((i) => i + 1)}
           />
         </span>
       ) : (
-        <span className="co-logo-fb" style={{ ["--tc" as string]: color, display: "flex" }}>
+        // FIX: was always rendered with display:flex inline style even when not failed.
+        // Now only rendered when failed === true, so CSS display:none on .co-logo-fb is irrelevant
+        // (we simply don't render it). This removes the conflicting inline style entirely.
+        <span
+          className="co-logo-fb"
+          style={{ ["--tc" as string]: color }}
+          aria-hidden="true"
+        >
           {firstLetter}
         </span>
       )}
-      {name}
+      <span className="co-name">{name}</span>
       <em className="co-cc">{cc}</em>
-      <span className="ext">↗</span>
+      <span className="ext" aria-hidden="true">↗</span>
     </a>
   )
 }

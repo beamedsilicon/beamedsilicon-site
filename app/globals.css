@@ -17,6 +17,13 @@ body{font-family:var(--sans);background:var(--bg-1);color:var(--text-0);line-hei
 a{color:inherit;text-decoration:none;}
 .wrap{max-width:var(--mw);margin:0 auto;padding:0 28px;}
 
+/* ── ACCESSIBILITY UTILITIES ── */
+/* FIX: Screen-reader only class — hides labels visually but keeps them in the a11y tree */
+.sr-only{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+}
+
 /* ── FLOW PARTICLES ── */
 .flow-canvas{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0.55;}
 
@@ -46,9 +53,6 @@ nav{display:flex;align-items:center;height:62px;}
 .hero-inner{position:relative;z-index:3;display:grid;grid-template-columns:1fr 440px;gap:60px;align-items:center;}
 .hero-text{position:relative;}
 
-/* ── LASER BEAM ── */
-.hero-laser{position:absolute;inset:0;pointer-events:none;z-index:1;}
-
 .eyebrow{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:0.22em;color:var(--yellow);margin-bottom:22px;}
 .eyebrow::before{content:'';width:22px;height:1px;background:var(--yellow);}
 .hero h1{font-family:var(--mono);font-size:clamp(2rem,5vw,3.5rem);font-weight:600;line-height:1.1;letter-spacing:-0.02em;max-width:780px;margin-bottom:20px;}
@@ -62,7 +66,6 @@ nav{display:flex;align-items:center;height:62px;}
 .silicon-scene{position:relative;width:480px;height:480px;flex-shrink:0;}
 .silicon-scene svg{width:100%;height:100%;}
 
-/* Crystal floating animation */
 @keyframes crystal-float{
   0%,100%{transform:translateY(0px) rotate(0deg);}
   33%{transform:translateY(-6px) rotate(0.3deg);}
@@ -70,21 +73,18 @@ nav{display:flex;align-items:center;height:62px;}
 }
 .crystal-group{animation:crystal-float 5s ease-in-out infinite;}
 
-/* Crystal glow pulse */
 @keyframes crystal-pulse{
   0%,100%{opacity:0.4;}
   50%{opacity:0.7;}
 }
 .crystal-ambient{animation:crystal-pulse 3s ease-in-out infinite;}
 
-/* Robot arm subtle movement */
 @keyframes arm-idle{
   0%,100%{transform:translateY(0);}
   50%{transform:translateY(-2px);}
 }
 .robot-arm{animation:arm-idle 4s ease-in-out infinite;}
 
-/* Laser beam pulsing */
 @keyframes laser-pulse{
   0%,100%{opacity:0.7;stroke-width:6;}
   50%{opacity:1;stroke-width:8;}
@@ -96,21 +96,18 @@ nav{display:flex;align-items:center;height:62px;}
 .laser-beam{animation:laser-pulse 0.8s ease-in-out infinite;}
 .laser-beam-core{animation:laser-core-pulse 0.8s ease-in-out infinite;}
 
-/* Laser LED glow */
 @keyframes led-glow{
   0%,100%{fill:#f5b731;filter:url(#glow);}
   50%{fill:#ffffff;filter:url(#strongGlow);}
 }
 .laser-led{animation:led-glow 1s ease-in-out infinite;}
 
-/* Status LED blink */
 @keyframes status-blink{
   0%,45%,55%,100%{opacity:1;}
   50%{opacity:0.3;}
 }
 .status-led{animation:status-blink 2s ease-in-out infinite;}
 
-/* Impact glow pulse */
 @keyframes impact-pulse{
   0%,100%{opacity:0.6;transform:scale(1);}
   50%{opacity:1;transform:scale(1.15);}
@@ -118,7 +115,6 @@ nav{display:flex;align-items:center;height:62px;}
 .impact-glow{animation:impact-pulse 0.6s ease-in-out infinite;}
 .impact-core{animation:impact-pulse 0.6s ease-in-out infinite 0.1s;}
 
-/* Energy rings expanding */
 @keyframes energy-ring{
   0%{r:12;opacity:0.9;stroke-width:3;}
   100%{r:80;opacity:0;stroke-width:0.5;}
@@ -127,7 +123,6 @@ nav{display:flex;align-items:center;height:62px;}
 .energy-ring-2{animation:energy-ring 1.8s ease-out 0.6s infinite;}
 .energy-ring-3{animation:energy-ring 1.8s ease-out 1.2s infinite;}
 
-/* Sparks flying from impact */
 @keyframes spark-fly-1{
   0%{transform:translate(0,0);opacity:1;}
   100%{transform:translate(-30px,-40px);opacity:0;}
@@ -149,21 +144,12 @@ nav{display:flex;align-items:center;height:62px;}
 .spark-3{animation:spark-fly-3 1s ease-out 0.4s infinite;}
 .spark-4{animation:spark-fly-4 1s ease-out 0.6s infinite;}
 
-/* Crystal face shimmer */
 @keyframes crystal-shimmer{
   0%,100%{fill-opacity:1;}
   50%{fill-opacity:0.85;}
 }
 .crystal-face{animation:crystal-shimmer 4s ease-in-out infinite;}
 .crystal-top{animation:crystal-shimmer 3s ease-in-out infinite 0.5s;}
-
-/* ── FLOW LINES (background decoration) ── */
-@keyframes flow-line{
-  0%{stroke-dashoffset:800;opacity:0;}
-  10%{opacity:1;}
-  90%{opacity:0.6;}
-  100%{stroke-dashoffset:0;opacity:0;}
-}
 
 .sec-head{display:flex;align-items:center;gap:16px;margin-bottom:28px;}
 .sec-label{font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:0.22em;color:var(--yellow);white-space:nowrap;}
@@ -176,6 +162,8 @@ nav{display:flex;align-items:center;height:62px;}
 .sc-intro-title{font-family:var(--mono);font-size:1.35rem;font-weight:600;line-height:1.25;margin-bottom:10px;}
 .sc-intro-sub{font-family:var(--serif);font-size:0.9375rem;font-weight:300;color:var(--text-1);line-height:1.7;max-width:700px;}
 .sc-search{margin-bottom:24px;display:flex;align-items:center;gap:12px;}
+/* FIX: type="search" needs appearance reset in WebKit */
+.sc-search input[type="search"]{-webkit-appearance:none;appearance:none;}
 .sc-search input{background:var(--bg-card);border:1px solid var(--border-md);border-radius:var(--r);padding:10px 16px;font-family:var(--mono);font-size:13px;color:var(--text-0);outline:none;width:340px;transition:border-color var(--t);}
 .sc-search input::placeholder{color:var(--text-2);}
 .sc-search input:focus{border-color:var(--border-yellow);}
@@ -185,6 +173,8 @@ nav{display:flex;align-items:center;height:62px;}
 .tier-panel{border-radius:var(--rl);overflow:hidden;border:1px solid var(--border);transition:border-color var(--t);}
 .tier-hd{display:flex;align-items:center;gap:16px;padding:18px 24px;cursor:pointer;background:var(--bg-card);transition:background var(--t);user-select:none;}
 .tier-hd:hover{background:var(--bg-card-h);}
+/* FIX: When tier toggle is disabled during search, show default cursor */
+.tier-hd[aria-disabled="true"]{cursor:default;}
 .tier-badge{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:600;flex-shrink:0;}
 .tier-info{flex:1;}
 .tier-name{font-family:var(--mono);font-size:13.5px;font-weight:600;line-height:1.2;}
@@ -198,6 +188,7 @@ nav{display:flex;align-items:center;height:62px;}
 .tier-desc{font-family:var(--serif);font-size:0.9rem;font-weight:300;color:var(--text-1);line-height:1.7;margin-bottom:18px;max-width:780px;}
 .co-grid{display:flex;flex-wrap:wrap;gap:6px;}
 
+/* ── COMPANY CHIP ── */
 .co-chip{
   display:inline-flex;align-items:center;gap:6px;
   font-family:var(--mono);font-size:10px;
@@ -214,9 +205,15 @@ nav{display:flex;align-items:center;height:62px;}
   background:var(--tbg,rgba(255,215,0,0.08));
   transform:translateY(-1px);
 }
+/* FIX: Focus-visible ring for keyboard navigation */
+.co-chip:focus-visible{
+  outline:2px solid var(--tc,var(--yellow));
+  outline-offset:2px;
+}
 .co-chip .ext{font-size:8px;opacity:0;transition:opacity var(--t);margin-left:1px;}
 .co-chip:hover .ext{opacity:0.7;}
 .co-cc{font-size:9px;color:var(--text-2);font-style:normal;}
+.co-name{/* explicit span so text doesn't need positional selectors */}
 .co-chip.hidden{display:none;}
 .co-logo-wrap{
   width:18px;height:18px;border-radius:4px;
@@ -228,14 +225,20 @@ nav{display:flex;align-items:center;height:62px;}
 .co-logo-wrap img{
   width:18px;height:18px;object-fit:contain;display:block;image-rendering:auto;
 }
+/* FIX: Removed display:none — we no longer render .co-logo-fb at all when a logo loads.
+   When it IS rendered (failed===true), we want flex. So display:flex is the correct default. */
 .co-logo-fb{
   width:18px;height:18px;border-radius:4px;
-  display:none;align-items:center;justify-content:center;
+  display:flex;align-items:center;justify-content:center;
   font-family:var(--mono);font-size:8px;font-weight:700;
   color:#000;flex-shrink:0;
   background:var(--tc,var(--yellow));
   opacity:0.7;
 }
+
+/* ── FORM FIELD WRAPPER ── */
+/* FIX: wrapper for label+input grouping in newsletter */
+.f-field{display:flex;flex-direction:column;gap:4px;width:100%;}
 
 .tier-conn{display:flex;align-items:center;height:20px;gap:10px;margin:1px 0;}
 .tier-conn::before,.tier-conn::after{content:'';flex:1;height:1px;background:var(--border);}
@@ -300,8 +303,12 @@ nav{display:flex;align-items:center;height:62px;}
 .f-in{background:var(--bg-card);border:1px solid var(--border-md);border-radius:var(--r);padding:11px 15px;font-family:var(--sans);font-size:14px;color:var(--text-0);outline:none;transition:border-color var(--t);width:100%;}
 .f-in::placeholder{color:var(--text-2);}
 .f-in:focus{border-color:var(--border-yellow);}
+/* FIX: visible focus ring for keyboard users */
+.f-in:focus-visible{border-color:var(--border-yellow);box-shadow:0 0 0 2px rgba(245,183,49,0.2);}
 .f-btn{background:var(--yellow);color:#0a0a00;border:none;border-radius:var(--r);padding:12px 24px;font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:0.1em;cursor:pointer;transition:opacity var(--t),box-shadow var(--t);text-align:left;}
 .f-btn:hover{opacity:0.88;box-shadow:0 0 20px rgba(255,215,0,0.35);}
+/* FIX: keyboard focus ring on submit button */
+.f-btn:focus-visible{outline:2px solid var(--yellow);outline-offset:3px;}
 .f-note{font-size:11px;color:var(--text-2);}
 
 footer{background:var(--bg-0);border-top:1px solid var(--border);padding:52px 0 28px;}
@@ -316,6 +323,18 @@ footer{background:var(--bg-0);border-top:1px solid var(--border);padding:52px 0 
 .ft-soc{display:flex;gap:8px;}
 .soc-btn{width:30px;height:30px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-2);cursor:pointer;transition:all var(--t);}
 .soc-btn:hover{color:var(--yellow);border-color:var(--border-yellow);background:var(--yellow-bg);}
+
+/* ── REDUCED MOTION SUPPORT ── */
+/* FIX: Respect user preference — disable all animations for users who prefer reduced motion */
+@media(prefers-reduced-motion:reduce){
+  .crystal-group,.crystal-ambient,.robot-arm,.laser-beam,.laser-beam-core,
+  .laser-led,.status-led,.impact-glow,.impact-core,.energy-ring-1,
+  .energy-ring-2,.energy-ring-3,.spark-1,.spark-2,.spark-3,.spark-4,
+  .crystal-face,.crystal-top{animation:none;}
+  .flow-canvas{display:none;}
+  .tick-track{animation:none;}
+  .read-link{transition:none;}
+}
 
 @media(max-width:1000px){.hero-inner{grid-template-columns:1fr;}.silicon-scene{width:320px;height:320px;margin:0 auto;}}
 @media(max-width:900px){.feat-card{grid-template-columns:1fr;}.feat-panel{display:none;}.grid-3{grid-template-columns:repeat(2,1fr);}.nl-card{grid-template-columns:1fr;gap:36px;padding:36px 28px;}.ft-top{grid-template-columns:1fr 1fr;gap:32px;}}
