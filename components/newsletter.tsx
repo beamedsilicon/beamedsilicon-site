@@ -1,28 +1,26 @@
 export function Newsletter() {
   return (
-    <section className="nl" id="newsletter">
+    <section className="nl" id="contact">
       <div className="wrap">
         <div className="nl-card">
           <div>
-            <div className="nl-eye">BEAMED SILICON BRIEFING</div>
-            <h2 className="nl-title">The complete supply chain, in your inbox</h2>
+            <div className="nl-eye">GET IN TOUCH</div>
+            <h2 className="nl-title">Contact Us</h2>
             <p className="nl-body">
-              Weekly: deep-dive analysis on fabs, equipment, materials, and policy — covering all 7 supply chain tiers
-              and all 350 companies. Used by procurement leads, investors, and engineers at the world&apos;s leading
-              semiconductor companies.
+              Have a tip, partnership inquiry, or question about our coverage? We&apos;d love to hear from
+              you — whether you&apos;re a procurement lead, investor, engineer, or just passionate about
+              semiconductors.
             </p>
           </div>
-          {/* FIX: Added <label> elements for screen reader accessibility.
-              Labels are visually hidden via .sr-only but present in the a11y tree. */}
           <form
             className="nl-form"
             action="https://formspree.io/f/mdajrgwa"
             method="POST"
           >
             <div className="f-field">
-              <label className="sr-only" htmlFor="nl-name">Your name</label>
+              <label className="sr-only" htmlFor="ct-name">Your name</label>
               <input
-                id="nl-name"
+                id="ct-name"
                 className="f-in"
                 type="text"
                 name="name"
@@ -33,27 +31,36 @@ export function Newsletter() {
             </div>
 
             <div className="f-field">
-              <label className="sr-only" htmlFor="nl-email">Work email address</label>
+              <label className="sr-only" htmlFor="ct-email">Your email address</label>
               <input
-                id="nl-email"
+                id="ct-email"
                 className="f-in"
                 type="email"
                 name="email"
-                placeholder="Work email address"
+                placeholder="Your email address"
                 autoComplete="email"
                 required
               />
             </div>
 
-            <button
-              className="f-btn"
-              type="submit"
-            >
-              SUBSCRIBE FREE →
+            <div className="f-field">
+              <label className="sr-only" htmlFor="ct-message">Message</label>
+              <textarea
+                id="ct-message"
+                className="f-in f-textarea"
+                name="message"
+                placeholder="Your message"
+                rows={4}
+                required
+              />
+            </div>
+
+            <button className="f-btn" type="submit">
+              SEND MESSAGE →
             </button>
 
             <p className="f-note">
-              No spam. Unsubscribe anytime. Read by 22,000+ semiconductor professionals.
+              We typically respond within 1–2 business days.
             </p>
           </form>
         </div>

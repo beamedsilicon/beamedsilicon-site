@@ -310,6 +310,7 @@ nav{display:flex;align-items:center;height:62px;}
 /* FIX: keyboard focus ring on submit button */
 .f-btn:focus-visible{outline:2px solid var(--yellow);outline-offset:3px;}
 .f-note{font-size:11px;color:var(--text-2);}
+.f-textarea{resize:vertical;min-height:100px;line-height:1.6;font-family:var(--sans);}
 
 footer{background:var(--bg-0);border-top:1px solid var(--border);padding:52px 0 28px;}
 .ft-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;margin-bottom:44px;}

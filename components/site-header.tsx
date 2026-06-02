@@ -3,7 +3,8 @@ export function SiteHeader() {
     <header>
       <div className="wrap">
         <nav>
-          <div className="logo">
+          {/* FIX: Wrapped logo in an <a> linking to "/" so clicking it returns to the homepage */}
+          <a href="/" className="logo" aria-label="Beamed Silicon — home">
             <div className="logo-icon">
               <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <rect x="5.5" y="5.5" width="7" height="7" rx="1" stroke="#f5b731" strokeWidth="1.2" />
@@ -20,26 +21,16 @@ export function SiteHeader() {
             <span className="logo-name">
               <span className="logo-beamed">beamed</span><span className="logo-silicon">silicon</span>
             </span>
-          </div>
+          </a>
           <ul className="nav-links">
-            <li>
-              <a href="#">News</a>
-            </li>
-            <li>
-              <a href="#sc-map">Supply Chain</a>
-            </li>
-            <li>
-              <a href="#">Companies</a>
-            </li>
-            <li>
-              <a href="#">Markets</a>
-            </li>
-            <li>
-              <a href="#">Policy</a>
-            </li>
+            <li><a href="#">News</a></li>
+            <li><a href="#sc-map">Supply Chain</a></li>
+            <li><a href="#">Companies</a></li>
+            <li><a href="#">Markets</a></li>
+            <li><a href="#">Policy</a></li>
           </ul>
-          <a href="#newsletter" className="btn-sub">
-            SUBSCRIBE
+          <a href="#contact" className="btn-sub">
+            CONTACT
           </a>
         </nav>
       </div>
