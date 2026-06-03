@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react"
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -108,7 +108,7 @@ function RangeBar({ low, high, current }: { low: number | null; high: number | n
 
 // ── Sparkline (7-day mini chart) ──────────────────────────────────────────────
 
-function Sparkline({ symbol, color }: { symbol: string; color: string }) {
+function Sparkline({ symbol }: { symbol: string }) {
   const [points, setPoints] = useState<number[] | null>(null)
 
   useEffect(() => {
@@ -154,6 +154,13 @@ function MarketBadge({ state }: { state: string | null }) {
   return <span className={`mk-state mk-state-${state.toLowerCase()}`}>{label}</span>
 }
 
+// ── Sort icon (outside component to avoid recreation on every render) ──────────
+
+function SortIcon({ sortKey, k, sortDir }: { sortKey: SortKey; k: SortKey; sortDir: SortDir }) {
+  if (sortKey !== k) return <span className="mk-sort-icon mk-sort-none">⇅</span>
+  return <span className="mk-sort-icon mk-sort-active">{sortDir === "asc" ? "↑" : "↓"}</span>
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function MarketsClient({ tierData }: Props) {
@@ -167,7 +174,9 @@ export function MarketsClient({ tierData }: Props) {
   const [sortDir, setSortDir] = useState<SortDir>("desc")
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const tier = tierData[activeTier]!
+  // Guard: if tierData is somehow empty, render nothing rather than throwing
+  if (tierData.length === 0) return null
+  const tier = tierData[activeTier] ?? tierData[0]!
 
   // Fetch quotes for the active tier in batches of 50
   const fetchQuotes = useCallback(async (t: TierData) => {
@@ -255,10 +264,7 @@ export function MarketsClient({ tierData }: Props) {
     else { setSortKey(key); setSortDir("desc") }
   }
 
-  function SortIcon({ k }: { k: SortKey }) {
-    if (sortKey !== k) return <span className="mk-sort-icon mk-sort-none">⇅</span>
-    return <span className="mk-sort-icon mk-sort-active">{sortDir === "asc" ? "↑" : "↓"}</span>
-  }
+  // SortIcon is defined outside the component to avoid recreation on every render
 
   const listedCount = tier.companies.filter((c) => c.ticker).length
   const loadedCount = tier.companies.filter((c) => c.ticker && quotes[c.ticker.symbol]).length
@@ -293,6 +299,7 @@ export function MarketsClient({ tierData }: Props) {
             {tierData.map((t, i) => (
               <button
                 key={t.level}
+                type="button"
                 className={`mk-tab${activeTier === i ? " mk-tab-active" : ""}`}
                 style={activeTier === i ? {
                   "--tc": t.color,
@@ -333,7 +340,7 @@ export function MarketsClient({ tierData }: Props) {
                   Updated {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </span>
               )}
-              <button className="mk-refresh" onClick={() => fetchQuotes(tier)} disabled={loading} title="Refresh">
+              <button type="button" className="mk-refresh" onClick={() => fetchQuotes(tier)} disabled={loading} title="Refresh">
                 <span className={loading ? "mk-spin" : ""}>↻</span>
               </button>
             </div>
@@ -368,22 +375,22 @@ export function MarketsClient({ tierData }: Props) {
               <thead>
                 <tr>
                   <th className="mk-th mk-th-name" onClick={() => toggleSort("name")}>
-                    Company <SortIcon k="name" />
+                    Company <SortIcon sortKey={sortKey} k="name" sortDir={sortDir} />
                   </th>
                   <th className="mk-th">Ticker</th>
                   <th className="mk-th mk-th-r">Exch</th>
                   <th className="mk-th mk-th-r" onClick={() => toggleSort("price")}>
-                    Price <SortIcon k="price" />
+                    Price <SortIcon sortKey={sortKey} k="price" sortDir={sortDir} />
                   </th>
                   <th className="mk-th mk-th-r" onClick={() => toggleSort("change")}>
-                    Change <SortIcon k="change" />
+                    Change <SortIcon sortKey={sortKey} k="change" sortDir={sortDir} />
                   </th>
                   <th className="mk-th mk-th-r mk-th-hide-sm">Volume</th>
                   <th className="mk-th mk-th-r" onClick={() => toggleSort("marketCap")}>
-                    Mkt Cap <SortIcon k="marketCap" />
+                    Mkt Cap <SortIcon sortKey={sortKey} k="marketCap" sortDir={sortDir} />
                   </th>
                   <th className="mk-th mk-th-r mk-th-hide-md" onClick={() => toggleSort("52wkRange")}>
-                    52-Week Range <SortIcon k="52wkRange" />
+                    52-Week Range <SortIcon sortKey={sortKey} k="52wkRange" sortDir={sortDir} />
                   </th>
                   <th className="mk-th mk-th-r mk-th-hide-md">5D Chart</th>
                 </tr>
@@ -845,6 +852,13 @@ export function MarketsClient({ tierData }: Props) {
           color: var(--text-2);
           font-family: var(--mono);
           letter-spacing: 0.03em;
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+          .mk-spin { animation: none; }
+          .mk-skel { animation: none; opacity: 0.4; }
+          .mk-load-fill { transition: none; }
         }
 
         /* Responsive hide */
