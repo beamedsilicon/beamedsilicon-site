@@ -28,7 +28,7 @@ export function SiteHeader() {
         <li><a href="#">Companies</a></li>
         {/* 👇 UPDATED LINE TO OPEN NEW TAB 👇 */}
         <li>
-          <a href="/market" target="_blank" rel="noopener noreferrer">
+          <a href="/markets" target="_blank" rel="noopener noreferrer">
             Markets
           </a>
         </li>
