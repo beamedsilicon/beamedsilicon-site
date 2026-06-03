@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
 
   // Sort a copy for a stable cache key — never mutate the symbols array
   const cacheKey = `quote:${[...symbols].sort().join(",")}`
-  const cached = fromCache<object[]>(cacheKey)
+  const cached = await fromCache<object[]>(cacheKey)
   if (cached) {
     return NextResponse.json({ quotes: cached, cached: true })
   }
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
     // FIX: yahooFinance.quote() accepts an array and makes ONE network request,
     // not N. This is far cheaper than N parallel quoteSummary() calls and
     // avoids Yahoo's per-IP rate limit on large batches.
-    const raw = await yahooFinance.quote(symbols, {
+    const rawQuotes = await yahooFinance.quote(symbols, {
       fields: [
         "symbol", "shortName", "longName", "currency",
         "regularMarketPrice", "regularMarketChange", "regularMarketChangePercent",
@@ -61,9 +61,9 @@ export async function GET(req: NextRequest) {
         "regularMarketDayLow", "marketCap", "fiftyTwoWeekHigh", "fiftyTwoWeekLow",
         "marketState", "fullExchangeName",
       ],
-    })
+    }) as Array<any> | any
 
-    const results = (Array.isArray(raw) ? raw : [raw]).map((q) => ({
+    const results = (Array.isArray(rawQuotes) ? rawQuotes : [rawQuotes]).map((q: any) => ({
       symbol: q.symbol,
       shortName: q.shortName ?? q.longName ?? q.symbol,
       currency: q.currency ?? "USD",
@@ -85,6 +85,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ quotes: results, cached: false })
   } catch (err) {
     const apiError = toApiError(err)
-    return NextResponse.json(apiError, { status: apiError.code })
+    return NextResponse.json(apiError, { status: apiError.code ?? apiError.status ?? 500 })
   }
 }

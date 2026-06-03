@@ -108,7 +108,7 @@ function RangeBar({ low, high, current }: { low: number | null; high: number | n
 
 // ── Sparkline (7-day mini chart) ──────────────────────────────────────────────
 
-function Sparkline({ symbol }: { symbol: string }) {
+function Sparkline({ symbol, color }: { symbol: string; color: string }) {
   const [points, setPoints] = useState<number[] | null>(null)
 
   useEffect(() => {
@@ -137,7 +137,7 @@ function Sparkline({ symbol }: { symbol: string }) {
   const ys = points.map((p) => h - ((p - min) / range) * h)
   const d = xs.map((x, i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(" ")
   const rising = (points[points.length - 1] ?? 0) >= (points[0] ?? 0)
-  const lineColor = rising ? "#aaff00" : "#ff5555"
+  const lineColor = color || (rising ? "#aaff00" : "#ff5555")
 
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="mk-spark">

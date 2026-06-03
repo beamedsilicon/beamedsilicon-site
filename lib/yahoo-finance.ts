@@ -1,7 +1,7 @@
 import yahooFinance from 'yahoo-finance2';
 
 // Simple placeholder caching functions to match your imports
-export async function fromCache(key: string) {
+export async function fromCache<T = unknown>(key: string): Promise<T | null> {
   // Your caching retrieval logic here
   return null;
 }
@@ -11,9 +11,11 @@ export async function setCache(key: string, data: any, ttl: number) {
 }
 
 export function toApiError(error: any) {
+  const status = error.status || 500
   return {
     message: error.message || "Internal Server Error",
-    status: error.status || 500
+    status,
+    code: status,
   };
 }
 
