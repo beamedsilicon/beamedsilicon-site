@@ -21,6 +21,20 @@ interface Article {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Deduplicate by normalised title — catches same story syndicated across
+// regional outlets (Investing UK / Australia / Philippines etc.)
+// ─────────────────────────────────────────────────────────────────────────────
+function dedupe(items: Article[]): Article[] {
+  const seen = new Set<string>()
+  return items.filter(a => {
+    const key = a.title.toLowerCase().replace(/[^a-z0-9]/g, "")
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 function fmtDate(s: string) {
@@ -143,7 +157,7 @@ function ArticleCard({ a, color }: { a: Article; color: string }) {
             </span>
           ))}
         </div>
-        <span style={{ fontSize: 14, color: "var(--text-2)", transition: "color .18s" }}>→</span>
+        <span style={{ fontSize: 14, color: "var(--text-2)" }}>→</span>
       </div>
     </a>
   )
@@ -175,15 +189,15 @@ function Skeleton() {
 // Page
 // ─────────────────────────────────────────────────────────────────────────────
 export default function NewsPage() {
-  const [activeTier, setActiveTier] = useState("all")
-  const [search,     setSearch]     = useState("")
-  const [articles,   setArticles]   = useState<Article[]>([])
-  const [loading,    setLoading]    = useState(true)
-  const [error,      setError]      = useState<string | null>(null)
-  const [nextPage,   setNextPage]   = useState<string | null>(null)
-  const [moreLoading, setMoreLoading] = useState(false)
+  const [activeTier,   setActiveTier]   = useState("all")
+  const [search,       setSearch]       = useState("")
+  const [articles,     setArticles]     = useState<Article[]>([])
+  const [loading,      setLoading]      = useState(true)
+  const [error,        setError]        = useState<string | null>(null)
+  const [nextPage,     setNextPage]     = useState<string | null>(null)
+  const [moreLoading,  setMoreLoading]  = useState(false)
 
-  const activeTab  = TABS.find(t => t.key === activeTier) ?? TABS[0]
+  const activeTab     = TABS.find(t => t.key === activeTier) ?? TABS[0]
   const activeTierObj = TIERS.find(t => String(t.level) === activeTier)
 
   // ── Fetch ────────────────────────────────────────────────────────────────
@@ -205,8 +219,12 @@ export default function NewsPage() {
       if (!res.ok) throw new Error(`Server error ${res.status}`)
       const data = await res.json()
       if (data.status !== "success") throw new Error(data.message ?? "API error")
-      if (isMore) setArticles(prev => [...prev, ...(data.results ?? [])])
-      else        setArticles(data.results ?? [])
+
+      const fresh = dedupe(data.results ?? [])
+
+      if (isMore) setArticles(prev => dedupe([...prev, ...fresh]))
+      else        setArticles(fresh)
+
       setNextPage(data.nextPage ?? null)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load news")
@@ -235,7 +253,6 @@ export default function NewsPage() {
 
   return (
     <>
-      {/* Skeleton keyframe */}
       <style>{`@keyframes sk{0%,100%{opacity:.4;}50%{opacity:.85;}}`}</style>
 
       <SiteHeader />
@@ -281,10 +298,7 @@ export default function NewsPage() {
           background: "var(--bg-1)", borderBottom: "1px solid var(--border)",
           overflowX: "auto", WebkitOverflowScrolling: "touch" as const,
         }}>
-          <div style={{
-            display: "flex", gap: 2, padding: "0 28px",
-            minWidth: "max-content",
-          }}>
+          <div style={{ display: "flex", gap: 2, padding: "0 28px", minWidth: "max-content" }}>
             {TABS.map(tab => {
               const active = tab.key === activeTier
               return (
@@ -293,8 +307,7 @@ export default function NewsPage() {
                   onClick={() => handleTierChange(tab.key)}
                   style={{
                     fontFamily: "var(--mono)", fontSize: "11px", fontWeight: 600,
-                    letterSpacing: "0.06em",
-                    padding: "14px 18px",
+                    letterSpacing: "0.06em", padding: "14px 18px",
                     background: active ? tab.cbg : "transparent",
                     color: active ? tab.color : "var(--text-2)",
                     border: "none",
@@ -336,7 +349,6 @@ export default function NewsPage() {
               onFocus={e => (e.target.style.borderColor = "var(--border-yellow)")}
               onBlur={e  => (e.target.style.borderColor = "var(--border-md)")}
             />
-            {/* Tier chip */}
             <span style={{
               fontFamily: "var(--mono)", fontSize: "10px", fontWeight: 600,
               padding: "4px 12px", borderRadius: 100,
@@ -362,18 +374,12 @@ export default function NewsPage() {
         <section style={{ padding: "48px 0", background: "var(--bg-1)", minHeight: 500 }}>
           <div className="wrap">
 
-            {/* Loading */}
             {loading && (
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3,1fr)",
-                gap: 18,
-              }}>
-                {[0, 1, 2, 3, 4, 5].map(i => <Skeleton key={i} />)}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 18 }}>
+                {[0,1,2,3,4,5].map(i => <Skeleton key={i} />)}
               </div>
             )}
 
-            {/* Error */}
             {!loading && error && (
               <div style={{
                 background: "var(--bg-card)", border: "1px solid var(--border-red)",
@@ -397,12 +403,8 @@ export default function NewsPage() {
               </div>
             )}
 
-            {/* Empty */}
             {!loading && !error && articles.length === 0 && (
-              <div style={{
-                textAlign: "center" as const, padding: "64px 0",
-                color: "var(--text-2)",
-              }}>
+              <div style={{ textAlign: "center" as const, padding: "64px 0", color: "var(--text-2)" }}>
                 <div style={{ fontFamily: "var(--mono)", fontSize: "11px", letterSpacing: "0.12em", marginBottom: 10 }}>
                   NO RESULTS
                 </div>
@@ -412,21 +414,14 @@ export default function NewsPage() {
               </div>
             )}
 
-            {/* Articles grid */}
             {!loading && !error && articles.length > 0 && (
               <>
-                <div style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3,1fr)",
-                  gap: 18,
-                  marginBottom: 36,
-                }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 18, marginBottom: 36 }}>
                   {articles.map(a => (
                     <ArticleCard key={a.article_id} a={a} color={activeTab.color} />
                   ))}
                 </div>
 
-                {/* Load more */}
                 {nextPage && (
                   <div style={{ textAlign: "center" as const }}>
                     <button
@@ -453,14 +448,10 @@ export default function NewsPage() {
           </div>
         </section>
 
-        {/* Disclaimer */}
         <section style={{ padding: "24px 0", background: "var(--bg-0)", borderTop: "1px solid var(--border)" }}>
           <div className="wrap">
-            <p style={{
-              fontFamily: "var(--mono)", fontSize: "10px", color: "var(--text-2)", lineHeight: 1.7,
-            }}>
-              News sourced from newsdata.io · Results cached 15 min · Free tier: 200 req/day ·
-              Showing top 6 companies per tier for tier-level queries
+            <p style={{ fontFamily: "var(--mono)", fontSize: "10px", color: "var(--text-2)", lineHeight: 1.7 }}>
+              News sourced from newsdata.io · Duplicates filtered client-side · Results cached 15 min · Free tier: 200 req/day
             </p>
           </div>
         </section>
