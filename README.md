@@ -2,7 +2,8 @@
 
 The definitive knowledge base for semiconductor supply chain intelligence. 350 companies. 7 supply chain tiers. Updated daily.
 
-**Live Site:** https://beamedsilicon-site.vercel.app
+**Live Site:** https://beamedsilicon.qzz.io/
+
 
 ---
 
