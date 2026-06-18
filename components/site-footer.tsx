@@ -1,4 +1,10 @@
+'use client'
+
+import { useTheme } from './theme-provider'
+
 export function SiteFooter() {
+  const { theme, toggleTheme } = useTheme()
+
   return (
     <footer>
       <div className="wrap">
@@ -76,6 +82,13 @@ export function SiteFooter() {
         <div className="ft-bot">
           <div className="ft-copy">© 2026 Beamed Silicon Intelligence. All rights reserved.</div>
           <div className="ft-soc">
+            <button
+              onClick={toggleTheme}
+              className="soc-btn"
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
             <a href="#" className="soc-btn" aria-label="X (Twitter)">
               𝕏
             </a>
