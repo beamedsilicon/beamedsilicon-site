@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { LanguageSelector } from "@/components/language-selector"
 export function SiteHeader() {
   return (
     <header>
@@ -31,6 +32,7 @@ export function SiteHeader() {
             <li><Link href="/analysis">Analysis</Link></li>
             <li><Link href="/policy">Policy</Link></li>
           </ul>
+               <LanguageSelector />
           <Link href="/#newsletter" className="btn-sub">
             CONTACT ME
           </Link>
