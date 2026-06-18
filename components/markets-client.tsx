@@ -113,7 +113,10 @@ export function MarketsClient() {
 
     try {
       const res  = await fetch(`/api/finance/quote?symbols=${symbols.join(",")}`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      if (!res.ok) {
+        const body = await res.json().catch(() => null) as { error?: string } | null
+        throw new Error(body?.error ?? `Request failed (${res.status})`)
+      }
       const data: Quote[] = await res.json()
       if (!Array.isArray(data)) throw new Error("Unexpected response")
       // Sort by market cap desc, put nulls at end

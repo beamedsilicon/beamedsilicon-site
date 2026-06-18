@@ -6,7 +6,8 @@ import { CompanyChip } from "@/components/company-chip"
 
 export function SupplyChainExplorer() {
   const [query, setQuery] = useState("")
-  const [manualOpen, setManualOpen] = useState<Record<number, boolean>>({ 1: true })
+  const [pinnedOpen, setPinnedOpen] = useState<Record<number, boolean>>({ 1: true })
+  const [hoveredTier, setHoveredTier] = useState<number | null>(null)
 
   const q = query.toLowerCase().trim()
 
@@ -21,7 +22,7 @@ export function SupplyChainExplorer() {
 
   const toggleTier = (level: number) => {
     if (q) return
-    setManualOpen((prev) => ({ ...prev, [level]: !prev[level] }))
+    setPinnedOpen((prev) => ({ ...prev, [level]: !prev[level] }))
   }
 
   let note = ""
@@ -60,11 +61,22 @@ export function SupplyChainExplorer() {
         <div id="tier-container">
           {TIERS.map((tier, idx) => {
             const tierMatches = q ? tier.cos.filter(([n]) => n.toLowerCase().includes(q)).length : 0
-            const isOpen = q ? tierMatches > 0 : Boolean(manualOpen[tier.level])
+            const isOpen = q
+              ? tierMatches > 0
+              : Boolean(pinnedOpen[tier.level] || hoveredTier === tier.level)
 
             return (
               <Fragment key={tier.level}>
-                <div className={`tier-panel${isOpen ? " open" : ""}`} id={`tier-${tier.level}`}>
+                <div
+                  className={`tier-panel${isOpen ? " open" : ""}`}
+                  id={`tier-${tier.level}`}
+                  onMouseEnter={() => {
+                    if (!q) setHoveredTier(tier.level)
+                  }}
+                  onMouseLeave={() => {
+                    if (!q) setHoveredTier(null)
+                  }}
+                >
                   <div
                     className="tier-hd"
                     onClick={() => toggleTier(tier.level)}
