@@ -89,7 +89,7 @@ export function SiteFooter() {
             >
               {theme === 'dark' ? '☀️' : '🌙'}
             </button>
-            <a href="#" className="soc-btn" aria-label="X (Twitter)">
+            <a href="https://x.com/beamedsilicon" className="soc-btn" aria-label="X (Twitter)">
               𝕏
             </a>
             <a href="#" className="soc-btn" aria-label="LinkedIn">
