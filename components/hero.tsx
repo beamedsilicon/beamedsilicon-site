@@ -4,19 +4,41 @@ import { useTheme } from "./theme-provider"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THEME PALETTES — night mode glows amber/gold (molten silicon). Day mode
-// glows neon sky blue (daylight cleanroom). Only the hue swaps; the particle
-// physics, opacity curves, and "hot white" highlights stay identical.
+// glows neon sky blue (daylight cleanroom).
+//   base/mid  — the accent hue used for blobs, shards, beams, lightning glow
+//   hot/head  — the "brightest point" colors (beam core, particle head,
+//               bright lightning core). On black these can be near-white;
+//               on white that would be invisible, so day mode uses a deep
+//               saturated blue instead — same role, opposite luminance.
+//   depthAlphaMul — the soft atmospheric layers (blobs/shards/beam glow)
+//               were tuned at very low opacity for a black backdrop. White
+//               needs noticeably more opacity to read as the same "depth",
+//               so day mode boosts it; night mode leaves it untouched.
 // ─────────────────────────────────────────────────────────────────────────────
 const PALETTES = {
-  dark: { base: "245,183,49", mid: "200,138,18", dim: "255,224,136" },
-  light: { base: "0,194,255", mid: "0,150,199", dim: "189,240,255" },
+  dark: {
+    base: "245,183,49",
+    mid: "200,138,18",
+    dim: "255,224,136",
+    hot: "255,252,220",
+    head: "255,255,255",
+    depthAlphaMul: 1,
+  },
+  light: {
+    base: "0,194,255",
+    mid: "0,150,199",
+    dim: "70,150,210",
+    hot: "0,90,170",
+    head: "0,60,130",
+    depthAlphaMul: 4,
+  },
 } as const
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ELECTRIC BACKGROUND — 5-layer canvas:
 //   1. Plasma depth blobs     (immersive warm-field glow)
 //   2. Crystal shard lattice  (rocky mineral geometry)
-//   3. Laser scan beams       (horizontal sweeps with hot-white core)
+//   3. Laser scan beams       (horizontal sweeps with hot core)
 //   4. Particle trails        (crystallographic-angle fast shots + drifters)
 //   5. Lightning bolts        (fractal electric discharge)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -170,6 +192,10 @@ function ElectricBackground() {
 
     const draw = (t: number) => {
       const pal = paletteRef.current
+      // Boosts the soft, low-opacity atmospheric layers (blobs/shards/beam
+      // glow) for visibility against a bright backdrop — see palette notes.
+      const depth = (v: number) => Math.min(1, v * pal.depthAlphaMul)
+
       ctx.clearRect(0, 0, W, H)
 
       // ── 1. Plasma depth blobs ───────────────────────────────────────────────
@@ -182,8 +208,8 @@ function ElectricBackground() {
 
         const pulse = 0.62 + 0.38 * Math.sin(t * 0.00078 + blob.phase)
         const g = ctx.createRadialGradient(blob.x, blob.y, 0, blob.x, blob.y, blob.r)
-        g.addColorStop(0,   `rgba(${pal.base},${(blob.alpha * pulse).toFixed(3)})`)
-        g.addColorStop(0.5, `rgba(${pal.mid},${(blob.alpha * pulse * 0.35).toFixed(3)})`)
+        g.addColorStop(0,   `rgba(${pal.base},${depth(blob.alpha * pulse).toFixed(3)})`)
+        g.addColorStop(0.5, `rgba(${pal.mid},${depth(blob.alpha * pulse * 0.35).toFixed(3)})`)
         g.addColorStop(1,   `rgba(${pal.base},0)`)
         ctx.fillStyle = g
         ctx.beginPath(); ctx.arc(blob.x, blob.y, blob.r, 0, Math.PI * 2); ctx.fill()
@@ -192,7 +218,7 @@ function ElectricBackground() {
       // ── 2. Crystal shard lattice (rocky mineral geometry) ──────────────────
       for (const s of shards) {
         const a = s.baseAlpha * (0.42 + 0.58 * (0.5 + 0.5 * Math.sin(t * 0.00062 + s.phase)))
-        ctx.globalAlpha = a
+        ctx.globalAlpha = depth(a)
         ctx.strokeStyle = `rgb(${pal.base})`
         ctx.lineWidth = 0.45
         ctx.beginPath()
@@ -203,7 +229,7 @@ function ElectricBackground() {
         if (s.pts.length >= 6) {
           // Subtle mineral fill on larger facets
           ctx.fillStyle = `rgb(${pal.base})`
-          ctx.globalAlpha = a * 0.14
+          ctx.globalAlpha = depth(a * 0.14)
           ctx.fill()
         }
       }
@@ -221,25 +247,25 @@ function ElectricBackground() {
         // Wide aura
         const g1 = ctx.createLinearGradient(0, b.y, W, b.y)
         g1.addColorStop(0,   `rgba(${pal.base},0)`)
-        g1.addColorStop(0.1, `rgba(${pal.base},${(al * 0.5).toFixed(3)})`)
-        g1.addColorStop(0.9, `rgba(${pal.base},${(al * 0.5).toFixed(3)})`)
+        g1.addColorStop(0.1, `rgba(${pal.base},${depth(al * 0.5).toFixed(3)})`)
+        g1.addColorStop(0.9, `rgba(${pal.base},${depth(al * 0.5).toFixed(3)})`)
         g1.addColorStop(1,   `rgba(${pal.base},0)`)
         ctx.fillStyle = g1; ctx.fillRect(0, b.y - 9, W, 18)
 
         // Main beam body
         const g2 = ctx.createLinearGradient(0, b.y, W, b.y)
         g2.addColorStop(0,    `rgba(${pal.base},0)`)
-        g2.addColorStop(0.12, `rgba(${pal.base},${al.toFixed(3)})`)
-        g2.addColorStop(0.88, `rgba(${pal.base},${al.toFixed(3)})`)
+        g2.addColorStop(0.12, `rgba(${pal.base},${depth(al).toFixed(3)})`)
+        g2.addColorStop(0.88, `rgba(${pal.base},${depth(al).toFixed(3)})`)
         g2.addColorStop(1,    `rgba(${pal.base},0)`)
         ctx.fillStyle = g2; ctx.fillRect(0, b.y - 1.5, W, 3)
 
-        // Hot-white core
+        // Hot core — deep saturated blue on white, near-white on black
         const g3 = ctx.createLinearGradient(0, b.y, W, b.y)
-        g3.addColorStop(0,   "rgba(255,252,220,0)")
-        g3.addColorStop(0.2, `rgba(255,252,220,${(al * 0.55).toFixed(3)})`)
-        g3.addColorStop(0.8, `rgba(255,252,220,${(al * 0.55).toFixed(3)})`)
-        g3.addColorStop(1,   "rgba(255,252,220,0)")
+        g3.addColorStop(0,   `rgba(${pal.hot},0)`)
+        g3.addColorStop(0.2, `rgba(${pal.hot},${depth(al * 0.55).toFixed(3)})`)
+        g3.addColorStop(0.8, `rgba(${pal.hot},${depth(al * 0.55).toFixed(3)})`)
+        g3.addColorStop(1,   `rgba(${pal.hot},0)`)
         ctx.fillStyle = g3; ctx.fillRect(0, b.y - 0.6, W, 1.2)
       }
 
@@ -265,16 +291,16 @@ function ElectricBackground() {
           ctx.beginPath()
           ctx.moveTo(p.trail[j].x, p.trail[j].y)
           ctx.lineTo(p.trail[j + 1].x, p.trail[j + 1].y)
-          // White-hot near the head, brand-hued through the body
-          ctx.strokeStyle = j < 5 ? "#fffce0" : `rgb(${pal.base})`
+          // Hot near the head, brand-hued through the body
+          ctx.strokeStyle = j < 5 ? `rgb(${pal.hot})` : `rgb(${pal.base})`
           ctx.globalAlpha = f * base * (p.fast ? 0.65 : 0.42)
           ctx.lineWidth = p.size * f
           ctx.stroke()
         }
-        // White-hot particle head
+        // Brightest particle head
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.size * 0.72, 0, Math.PI * 2)
-        ctx.fillStyle = "#ffffff"
+        ctx.fillStyle = `rgb(${pal.head})`
         ctx.globalAlpha = base * 0.82
         ctx.fill()
       }
@@ -304,15 +330,15 @@ function ElectricBackground() {
         ctx.moveTo(bolt.pts[0].x, bolt.pts[0].y)
         for (let j = 1; j < nPts; j++) ctx.lineTo(bolt.pts[j].x, bolt.pts[j].y)
         ctx.strokeStyle = `rgb(${pal.base})`
-        ctx.globalAlpha = alpha * (bolt.bright ? 0.42 : 0.25)
+        ctx.globalAlpha = depth(alpha * (bolt.bright ? 0.42 : 0.25))
         ctx.lineWidth = bolt.bright ? 3.5 : 2
         ctx.stroke()
 
-        // White / pale core
+        // Bright / pale core
         ctx.beginPath()
         ctx.moveTo(bolt.pts[0].x, bolt.pts[0].y)
         for (let j = 1; j < nPts; j++) ctx.lineTo(bolt.pts[j].x, bolt.pts[j].y)
-        ctx.strokeStyle = bolt.bright ? "#ffffff" : `rgb(${pal.dim})`
+        ctx.strokeStyle = bolt.bright ? `rgb(${pal.head})` : `rgb(${pal.dim})`
         ctx.globalAlpha = alpha * (bolt.bright ? 0.9 : 0.64)
         ctx.lineWidth = bolt.bright ? 0.85 : 0.5
         ctx.stroke()
@@ -336,6 +362,23 @@ function ElectricBackground() {
   }, [])
 
   return <canvas ref={canvasRef} className="flow-canvas" aria-hidden="true" />
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AMBIENT DEPTH BLOBS — static, heavily-blurred radial color washes behind
+// the hero content. Subtle at night (the canvas already carries the
+// atmosphere there), and the primary "depth" cue by day, where a flat
+// white background would otherwise read as empty. Colored via var(--yellow)
+// so it follows the same amber/blue swap as everything else.
+// ─────────────────────────────────────────────────────────────────────────────
+function HeroDepthBlobs() {
+  return (
+    <div className="hero-blur-depth" aria-hidden="true">
+      <span style={{ width: 520, height: 520, top: "-14%", left: "-8%" }} />
+      <span style={{ width: 420, height: 420, top: "6%", right: "-8%" }} />
+      <span style={{ width: 380, height: 380, bottom: "-22%", left: "36%" }} />
+    </div>
+  )
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -526,6 +569,7 @@ export function Hero() {
     <>
       <ElectricBackground />
       <section className="hero">
+        <HeroDepthBlobs />
         <div className="wrap hero-inner">
           <div className="hero-text">
             <div className="eyebrow">THE DEFINITIVE SEMICONDUCTOR INTELLIGENCE PLATFORM</div>
