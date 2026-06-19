@@ -11,14 +11,20 @@ type ThemeContextType = {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
-declare global {
-  interface Document {
-    startViewTransition?: (callback: () => void | Promise<void>) => {
-      ready: Promise<void>
-      finished: Promise<void>
-      updateCallbackDone: Promise<void>
-    }
+// Read `document.startViewTransition` through a local cast instead of
+// `declare global { interface Document {...} }`. Some TypeScript/lib.dom.d.ts
+// versions already declare this method themselves, and re-opening the
+// global interface with different optionality is a hard compile error
+// ("All declarations of 'startViewTransition' must have identical
+// modifiers"). A local cast sidesteps that entirely.
+function startThemeViewTransition(callback: () => void): boolean {
+  if (typeof document === 'undefined') return false
+  const docWithViewTransition = document as unknown as {
+    startViewTransition?: (cb: () => void | Promise<void>) => unknown
   }
+  if (typeof docWithViewTransition.startViewTransition !== 'function') return false
+  docWithViewTransition.startViewTransition(callback)
+  return true
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -63,11 +69,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-    if (document.startViewTransition && !prefersReducedMotion) {
-      document.startViewTransition(() => {
-        setTheme(next)
-      })
-    } else {
+    const usedViewTransition =
+      !prefersReducedMotion && startThemeViewTransition(() => setTheme(next))
+
+    if (!usedViewTransition) {
       setTheme(next)
     }
   }
