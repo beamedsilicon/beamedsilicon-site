@@ -83,7 +83,13 @@ export function SiteFooter() {
           <div className="ft-copy">© 2026 Beamed Silicon Intelligence. All rights reserved.</div>
           <div className="ft-soc">
             <button
-              onClick={toggleTheme}
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect()
+                toggleTheme({
+                  x: rect.left + rect.width / 2,
+                  y: rect.top + rect.height / 2,
+                })
+              }}
               className="soc-btn"
               aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             >

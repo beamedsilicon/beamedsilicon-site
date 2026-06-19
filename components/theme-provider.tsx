@@ -6,10 +6,20 @@ type Theme = 'dark' | 'light'
 
 type ThemeContextType = {
   theme: Theme
-  toggleTheme: () => void
+  toggleTheme: (origin?: { x: number; y: number }) => void
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
+
+declare global {
+  interface Document {
+    startViewTransition?: (callback: () => void | Promise<void>) => {
+      ready: Promise<void>
+      finished: Promise<void>
+      updateCallbackDone: Promise<void>
+    }
+  }
+}
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('dark')
@@ -33,8 +43,33 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [theme, mounted])
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark')
+  // `origin` is the screen position the toggle was clicked from (usually the
+  // button itself) — it anchors the circular reveal animation defined in
+  // globals.css via the --theme-toggle-x/y custom properties.
+  const toggleTheme = (origin?: { x: number; y: number }) => {
+    const next: Theme = theme === 'dark' ? 'light' : 'dark'
+
+    if (typeof document === 'undefined') {
+      setTheme(next)
+      return
+    }
+
+    if (origin) {
+      document.documentElement.style.setProperty('--theme-toggle-x', `${origin.x}px`)
+      document.documentElement.style.setProperty('--theme-toggle-y', `${origin.y}px`)
+    }
+
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    if (document.startViewTransition && !prefersReducedMotion) {
+      document.startViewTransition(() => {
+        setTheme(next)
+      })
+    } else {
+      setTheme(next)
+    }
   }
 
   return (
