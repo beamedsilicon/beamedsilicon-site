@@ -15,8 +15,15 @@ export function CompanyChip({ company, color, cbg, hidden }: CompanyChipProps) {
 
   const sources = useMemo(() => {
     const domain = new URL(url).hostname.replace(/^www\./, "")
+    // NOTE: we deliberately do NOT fetch `https://${domain}/favicon.ico`
+    // directly. Some company sites (e.g. ones behind certain enterprise
+    // WAFs/CDNs) require TLS client-certificate auth on their root domain,
+    // which makes the browser pop up an OS-level "Select a certificate"
+    // dialog the instant we try to load their favicon in the background —
+    // intrusive and blocking, with no way to suppress it from JS. Sticking
+    // to third-party favicon services means we only ever talk to Google
+    // and DuckDuckGo, never the 350 individual company origins.
     return [
-      `https://${domain}/favicon.ico`,
       `https://www.google.com/s2/favicons?domain=${domain}&sz=32`,
       `https://icons.duckduckgo.com/ip3/${domain}.ico`,
     ]

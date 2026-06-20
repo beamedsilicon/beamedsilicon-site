@@ -20,7 +20,7 @@ export function SiteHeader() {
                 <line x1="13" y1="13" x2="16" y2="16" stroke="#f5b731" strokeWidth="0.8" opacity="0.45" />
               </svg>
             </div>
-            <Link href="/" className="logo-name">
+            <Link href="/" className="logo-name" aria-label="Beamed Silicon — home">
               <span className="logo-beamed">beamed</span><span className="logo-silicon">silicon</span>
             </Link>
           </div>

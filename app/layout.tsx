@@ -88,7 +88,10 @@ const websiteLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: "Beamed Silicon",
-  alternateName: "Beamed Silicon Intelligence",
+  // Including the bare domain as a fallback alternate gives Google's site-name
+  // system a safe option to land on if it isn't confident enough to pick the
+  // brand name outright — recommended for newer/lower-authority domains.
+  alternateName: ["Beamed Silicon Intelligence", "beamedsilicon.qzz.io"],
   url: "https://beamedsilicon.qzz.io",
   description: "Semiconductor supply chain intelligence — 350 companies, 7 tiers, from quartz mines to AI accelerators.",
   potentialAction: {
@@ -102,10 +105,14 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
   name: "Beamed Silicon Intelligence",
+  alternateName: ["Beamed Silicon", "beamedsilicon.qzz.io"],
   url: "https://beamedsilicon.qzz.io",
   description:
     "Semiconductor supply chain intelligence platform covering 350 companies across 7 tiers from raw material extraction to fabless chip design.",
-  sameAs: [],
+  // External profile(s) corroborating this is a real, distinct entity —
+  // Google's site-name confidence partly depends on "how the site is
+  // referenced across the web." Add any other verified profiles you have.
+  sameAs: ["https://x.com/beamedsilicon"],
   knowsAbout: [
     "Semiconductor supply chain",
     "Chip manufacturing",
