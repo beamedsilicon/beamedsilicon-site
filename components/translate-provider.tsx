@@ -152,7 +152,8 @@ async function detectLanguageFromCountry(): Promise<LanguageCode | null> {
     if (!res.ok) return null
     const data = (await res.json()) as { country?: string }
     const cc = data.country?.toUpperCase()
-    return (cc && COUNTRY_LANGUAGE[cc]) ?? null
+    if (!cc) return null
+    return COUNTRY_LANGUAGE[cc] ?? null
   } catch {
     return null
   }
