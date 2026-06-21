@@ -36,6 +36,14 @@ const COUNTRY_NAMES: Record<string, string> = {
   RU: "Russia",
   SA: "Saudi Arabia",
   IN: "India",
+  MY: "Malaysia",
+  FI: "Finland",
+  DK: "Denmark",
+  PL: "Poland",
+  PE: "Peru",
+  ID: "Indonesia",
+  KZ: "Kazakhstan",
+  TR: "Turkey",
 }
 
 const COUNTRY_FLAGS: Record<string, string> = {
@@ -45,6 +53,8 @@ const COUNTRY_FLAGS: Record<string, string> = {
   FR: "🇫🇷", NO: "🇳🇴", SE: "🇸🇪", IL: "🇮🇱",
   IT: "🇮🇹", SG: "🇸🇬", AU: "🇦🇺", CL: "🇨🇱",
   BR: "🇧🇷", RU: "🇷🇺", SA: "🇸🇦", IN: "🇮🇳",
+  MY: "🇲🇾", FI: "🇫🇮", DK: "🇩🇰", PL: "🇵🇱",
+  PE: "🇵🇪", ID: "🇮🇩", KZ: "🇰🇿", TR: "🇹🇷",
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
