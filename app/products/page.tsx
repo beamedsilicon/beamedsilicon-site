@@ -1,200 +1,251 @@
-import React from "react";
+import type { Metadata } from "next"
+import { SiteHeader } from "@/components/site-header"
+import { SiteFooter } from "@/components/site-footer"
+import { TIERS } from "@/lib/tiers"
+import { COMPANY_PRODUCTS } from "@/lib/products"
 
-interface Industry {
-  id: number;
-  name: string;
-  description: string;
-  applications: string[];
+export const metadata: Metadata = {
+  title: "Products",
+  description:
+    "What each company in the semiconductor supply chain actually makes — flagship product lines, by tier, with direct links to the official product page.",
 }
 
-const industries: Industry[] = [
-  {
-    id: 1,
-    name: "Automotive",
-    description:
-      "High-performance chips and ICs powering modern vehicles and mobility solutions.",
-    applications: [
-      "ADAS Systems",
-      "Electric Vehicles (EV)",
-      "Battery Management",
-      "Infotainment Systems",
-      "Engine Control Units",
-    ],
-  },
-  {
-    id: 2,
-    name: "Industrial Automation",
-    description:
-      "Reliable semiconductor solutions for smart factories and industrial control systems.",
-    applications: [
-      "PLC Controllers",
-      "Robotics",
-      "Motor Drives",
-      "Industrial Sensors",
-      "Factory Automation",
-    ],
-  },
-  {
-    id: 3,
-    name: "Consumer Electronics",
-    description:
-      "Efficient ICs designed for next-generation consumer devices.",
-    applications: [
-      "Smartphones",
-      "Wearables",
-      "Smart Home Devices",
-      "Gaming Systems",
-      "Audio Equipment",
-    ],
-  },
-  {
-    id: 4,
-    name: "Healthcare",
-    description:
-      "Precision chips and integrated circuits for medical technologies.",
-    applications: [
-      "Patient Monitoring",
-      "Medical Imaging",
-      "Diagnostic Equipment",
-      "Portable Medical Devices",
-      "Telehealth Solutions",
-    ],
-  },
-  {
-    id: 5,
-    name: "Telecommunications",
-    description:
-      "Advanced semiconductor solutions enabling high-speed connectivity.",
-    applications: [
-      "5G Infrastructure",
-      "Networking Equipment",
-      "Fiber Optics",
-      "Data Transmission",
-      "Wireless Communication",
-    ],
-  },
-  {
-    id: 6,
-    name: "Aerospace & Defense",
-    description:
-      "Rugged and reliable ICs for mission-critical systems.",
-    applications: [
-      "Navigation Systems",
-      "Radar Systems",
-      "Satellite Communications",
-      "Flight Control",
-      "Defense Electronics",
-    ],
-  },
-];
+const TIER_SHORT: Record<number, string> = {
+  1: "Fabless", 2: "Foundries", 3: "Equipment",
+  4: "Subsystems", 5: "Components", 6: "Materials", 7: "Mining",
+}
 
-const ProductsPage: React.FC = () => {
+export default function ProductsPage() {
+  const totalProducts = COMPANY_PRODUCTS.reduce((sum, c) => sum + c.products.length, 0)
+  const cataloguedCount = COMPANY_PRODUCTS.length
+  let totalCompanies = 0
+  for (const tier of TIERS) totalCompanies += tier.cos.length
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <section className="bg-slate-900 text-white py-20">
-        <div className="container mx-auto px-6 max-w-6xl">
-          <h1 className="text-5xl font-bold mb-4">
-            Semiconductor Solutions
-          </h1>
-          <p className="text-xl text-gray-300 max-w-3xl">
-            High-performance Chips and Integrated Circuits powering innovation
-            across industries worldwide.
-          </p>
-        </div>
-      </section>
+    <>
+      <SiteHeader />
+      <main>
 
-      {/* Product Overview */}
-      <section className="py-16">
-        <div className="container mx-auto px-6 max-w-6xl">
-          <h2 className="text-3xl font-bold mb-6">
-            Our Product Portfolio
-          </h2>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-white p-6 rounded-xl shadow">
-              <h3 className="text-2xl font-semibold mb-3">
-                Semiconductor Chips
-              </h3>
-              <p className="text-gray-600">
-                High-performance processing, memory, and communication chips
-                designed for reliability, efficiency, and scalability.
-              </p>
+        {/* PAGE HEADER */}
+        <section style={{
+          padding: "64px 0 48px", background: "var(--bg-0)",
+          borderBottom: "1px solid var(--border)", position: "relative", overflow: "hidden",
+        }}>
+          <div style={{
+            position: "absolute", inset: 0,
+            backgroundImage: "linear-gradient(rgba(255,215,0,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,215,0,0.025) 1px,transparent 1px)",
+            backgroundSize: "52px 52px",
+          }} />
+          <div className="wrap" style={{ position: "relative", zIndex: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
+              <span style={{ width: 22, height: 1, background: "var(--yellow)", display: "block" }} />
+              <span style={{
+                fontFamily: "var(--mono)", fontSize: "9.5px", fontWeight: 600,
+                letterSpacing: "0.22em", color: "var(--yellow)",
+              }}>
+                SEMICONDUCTOR INTELLIGENCE
+              </span>
             </div>
+            <h1 style={{
+              fontFamily: "var(--mono)", fontSize: "clamp(1.8rem,4vw,3rem)",
+              fontWeight: 600, lineHeight: 1.1, letterSpacing: "-.02em", marginBottom: 14,
+            }}>
+              What the Supply Chain{" "}
+              <span style={{ color: "var(--yellow)" }}>Actually Makes</span>
+            </h1>
+            <p style={{
+              fontFamily: "var(--serif)", fontSize: "1rem", fontWeight: 300,
+              color: "var(--text-1)", maxWidth: 600, lineHeight: 1.75, marginBottom: 36,
+            }}>
+              Every company in our database does something specific — NXP designs automotive
+              microcontrollers, Panasonic builds wire bonders, Sibelco mines the quartz. This is
+              the flagship product line for each company we&apos;ve catalogued, linked straight to
+              the official product page.
+            </p>
 
-            <div className="bg-white p-6 rounded-xl shadow">
-              <h3 className="text-2xl font-semibold mb-3">
-                Integrated Circuits (ICs)
-              </h3>
-              <p className="text-gray-600">
-                Analog, digital, mixed-signal, power management, and custom IC
-                solutions for diverse industrial requirements.
-              </p>
+            {/* Stats */}
+            <div style={{ display: "flex", gap: 44, flexWrap: "wrap" }}>
+              {[
+                { n: cataloguedCount, l: "COMPANIES CATALOGUED" },
+                { n: totalProducts, l: "PRODUCT LINES LISTED" },
+                { n: totalCompanies, l: "TOTAL COMPANIES TRACKED" },
+              ].map(({ n, l }) => (
+                <div key={l}>
+                  <div style={{
+                    fontFamily: "var(--mono)", fontSize: "1.9rem", fontWeight: 600,
+                    color: "var(--yellow)", lineHeight: 1,
+                  }}>{n}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-2)", letterSpacing: "0.06em", marginTop: 5 }}>
+                    {l}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Industries */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-6 max-w-6xl">
-          <h2 className="text-3xl font-bold mb-10">
-            Industries We Serve
-          </h2>
+        {/* COVERAGE NOTE */}
+        <section style={{ padding: "20px 0", background: "var(--bg-1)", borderBottom: "1px solid var(--border)" }}>
+          <div className="wrap">
+            <p style={{
+              fontFamily: "var(--mono)", fontSize: "10.5px",
+              color: "var(--text-2)", lineHeight: 1.7,
+            }}>
+              Coverage in progress — {cataloguedCount} of {totalCompanies} companies catalogued so far.
+              Companies without a product breakdown yet link straight to their official site below.
+            </p>
+          </div>
+        </section>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {industries.map((industry) => (
-              <div
-                key={industry.id}
-                className="border rounded-xl p-6 hover:shadow-lg transition-shadow"
-              >
-                <h3 className="text-xl font-semibold mb-3">
-                  {industry.name}
-                </h3>
+        {/* TIER SECTIONS */}
+        {TIERS.map((tier, idx) => {
+          const cataloguedInTier = COMPANY_PRODUCTS.filter((c) => c.tier === tier.level)
+          const cataloguedNames = new Set(cataloguedInTier.map((c) => c.company))
+          const uncataloguedInTier = tier.cos.filter(([name]) => !cataloguedNames.has(name))
 
-                <p className="text-gray-600 mb-4">
-                  {industry.description}
-                </p>
+          return (
+            <section
+              key={tier.level}
+              id={`tier-${tier.level}`}
+              style={{
+                padding: "56px 0",
+                background: idx % 2 === 0 ? "var(--bg-0)" : "var(--bg-1)",
+                borderBottom: "1px solid var(--border)",
+              }}
+            >
+              <div className="wrap">
 
-                <h4 className="font-medium mb-2">
-                  Applications
-                </h4>
+                {/* Tier header */}
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 20, marginBottom: 36 }}>
+                  <div style={{
+                    width: 54, height: 54, borderRadius: 10, flexShrink: 0,
+                    background: tier.cbg, border: `1px solid ${tier.cbr}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontFamily: "var(--mono)", fontSize: "14px", fontWeight: 600, color: tier.color,
+                  }}>
+                    T{tier.level}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h2 style={{
+                      fontFamily: "var(--mono)", fontSize: "1.1rem", fontWeight: 600,
+                      color: tier.color, marginBottom: 6, lineHeight: 1.2,
+                    }}>
+                      {tier.name}
+                    </h2>
+                    <span style={{
+                      fontFamily: "var(--mono)", fontSize: "10px", fontWeight: 600,
+                      padding: "3px 10px", borderRadius: 100,
+                      background: tier.cbg, color: tier.color, border: `1px solid ${tier.cbr}`,
+                    }}>
+                      {cataloguedInTier.length} of {tier.cos.length} catalogued
+                    </span>
+                  </div>
+                </div>
 
-                <ul className="space-y-2">
-                  {industry.applications.map((app) => (
-                    <li
-                      key={app}
-                      className="text-sm text-gray-700 flex items-center"
-                    >
-                      <span className="mr-2">•</span>
-                      {app}
-                    </li>
-                  ))}
-                </ul>
+                {/* Catalogued companies — full product breakdown */}
+                {cataloguedInTier.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 18, marginBottom: uncataloguedInTier.length ? 36 : 0 }}>
+                    {cataloguedInTier.map((entry) => (
+                      <div
+                        key={entry.company}
+                        style={{
+                          background: "var(--bg-card)", border: "1px solid var(--border)",
+                          borderRadius: "var(--rl)", padding: "22px 24px",
+                        }}
+                      >
+                        <div style={{
+                          fontFamily: "var(--mono)", fontSize: "13.5px", fontWeight: 600,
+                          color: "var(--text-0)", marginBottom: 14,
+                        }}>
+                          {entry.company}
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 10 }}>
+                          {entry.products.map((p) => (
+                            <a
+                              key={p.name}
+                              href={p.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="co-chip"
+                              style={{
+                                display: "flex", flexDirection: "column", alignItems: "flex-start",
+                                gap: 4, padding: "12px 14px", height: "auto",
+                                ["--tc" as string]: tier.color,
+                                ["--tbg" as string]: tier.cbg,
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", gap: 6, width: "100%" }}>
+                                <span style={{ fontFamily: "var(--mono)", fontSize: "11.5px", fontWeight: 600 }}>
+                                  {p.name}
+                                </span>
+                                <span className="ext" style={{ marginLeft: "auto", opacity: 0.6 }}>↗</span>
+                              </div>
+                              <span style={{
+                                fontFamily: "var(--sans)", fontSize: "10.5px",
+                                color: "var(--text-2)", lineHeight: 1.4, fontWeight: 400,
+                              }}>
+                                {p.description}
+                              </span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Not-yet-catalogued companies — site link only */}
+                {uncataloguedInTier.length > 0 && (
+                  <div>
+                    <div style={{
+                      fontFamily: "var(--mono)", fontSize: "9.5px", fontWeight: 600,
+                      letterSpacing: "0.14em", color: "var(--text-2)", marginBottom: 12,
+                    }}>
+                      NOT YET CATALOGUED — VISIT SITE
+                    </div>
+                    <div className="co-grid">
+                      {uncataloguedInTier.map(([name, , url]) => (
+                        <a
+                          key={name}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="co-chip"
+                          style={{
+                            ["--tc" as string]: tier.color,
+                            ["--tbg" as string]: tier.cbg,
+                          }}
+                        >
+                          {name}
+                          <span className="ext">↗</span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
               </div>
-            ))}
+            </section>
+          )
+        })}
+
+        {/* DISCLAIMER */}
+        <section style={{ padding: "24px 0", background: "var(--bg-0)", borderTop: "1px solid var(--border)" }}>
+          <div className="wrap">
+            <p style={{
+              fontFamily: "var(--mono)", fontSize: "10px",
+              color: "var(--text-2)", lineHeight: 1.7, maxWidth: 720,
+            }}>
+              Product lines reflect each company&apos;s current flagship offerings and may change as
+              products are discontinued or renamed. Links go to each company&apos;s official site.
+              Most B2B suppliers in this database sell through direct sales contracts rather than
+              e-commerce checkout — &quot;product page&quot; means where that conversation starts, not a cart.
+            </p>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* CTA */}
-      <section className="bg-slate-900 text-white py-16">
-        <div className="container mx-auto px-6 max-w-4xl text-center">
-          <h2 className="text-3xl font-bold mb-4">
-            Looking for Custom Semiconductor Solutions?
-          </h2>
-          <p className="text-gray-300 mb-8">
-            Our team can help identify the right chips and ICs for your
-            application and industry requirements.
-          </p>
-
-          <button className="bg-white text-slate-900 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100">
-            Contact Sales
-          </button>
-        </div>
-      </section>
-    </div>
-  );
-};
-
-export default ProductsPage;
+      </main>
+      <SiteFooter />
+    </>
+  )
+}
