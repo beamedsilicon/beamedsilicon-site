@@ -26,7 +26,7 @@ export function SiteHeader() {
           </div>
           <ul className="nav-links">
             <li><Link href="/news">News</Link></li>
-            <li><a href="/#sc-map">Supply Chain</a></li>
+            <li><Link href="/supply-chain">Supply Chain</Link></li>
             <li><Link href="/products">Products</Link></li>
             <li><Link href="/companies">Companies</Link></li>
             <li><Link href="/markets">Markets</Link></li>

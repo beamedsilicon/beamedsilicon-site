@@ -1,7 +1,6 @@
 import { SiteHeader } from "@/components/site-header"
 import { Ticker } from "@/components/ticker"
 import { Hero } from "@/components/hero"
-import { SupplyChainExplorer } from "@/components/supply-chain-explorer"
 import { FeaturedAnalysis } from "@/components/featured-analysis"
 import { LatestNews } from "@/components/latest-news"
 import { Topics } from "@/components/topics"
@@ -15,7 +14,6 @@ export default function Home() {
       <Ticker />
       <main>
         <Hero />
-        <SupplyChainExplorer />
         <FeaturedAnalysis />
         <LatestNews />
         <Topics />
