@@ -1,611 +1,504 @@
 "use client"
-import { useEffect, useRef } from "react"
-import { useTheme } from "./theme-provider"
 
-// ─────────────────────────────────────────────────────────────────────────────
-// THEME PALETTES — night mode glows amber/gold (molten silicon). Day mode
-// glows neon sky blue (daylight cleanroom).
-//   base/mid  — the accent hue used for blobs, shards, beams, lightning glow
-//   hot/head  — the "brightest point" colors (beam core, particle head,
-//               bright lightning core). On black these can be near-white;
-//               on white that would be invisible, so day mode uses a deep
-//               saturated blue instead — same role, opposite luminance.
-//   depthAlphaMul — the soft atmospheric layers (blobs/shards/beam glow)
-//               were tuned at very low opacity for a black backdrop. White
-//               needs noticeably more opacity to read as the same "depth",
-//               so day mode boosts it; night mode leaves it untouched.
-// ─────────────────────────────────────────────────────────────────────────────
-const PALETTES = {
-  dark: {
-    base: "245,183,49",
-    mid: "200,138,18",
-    dim: "255,224,136",
-    hot: "255,252,220",
-    head: "255,255,255",
-    depthAlphaMul: 1,
-  },
-  light: {
-    base: "0,194,255",
-    mid: "0,150,199",
-    dim: "70,150,210",
-    hot: "0,90,170",
-    head: "0,60,130",
-    depthAlphaMul: 4,
-  },
-} as const
+import { useRef, useEffect, useState } from "react"
+import { useTheme } from "next-themes"
+import Link from "next/link"
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ELECTRIC BACKGROUND — 5-layer canvas:
-//   1. Plasma depth blobs     (immersive warm-field glow)
-//   2. Crystal shard lattice  (rocky mineral geometry)
-//   3. Laser scan beams       (horizontal sweeps with hot core)
-//   4. Particle trails        (crystallographic-angle fast shots + drifters)
-//   5. Lightning bolts        (fractal electric discharge)
-// ─────────────────────────────────────────────────────────────────────────────
-function ElectricBackground() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const { theme } = useTheme()
-  const paletteRef = useRef(PALETTES[theme])
+// ─── Tier configuration ────────────────────────────────────────────────────
+// Each tier gets its own orbital ring with a distinct inclination, radius,
+// speed, and design-system colour. Inclination goes from 0° (equatorial)
+// to 90° (polar) so the rings fan out into a 3-D armillary-sphere shape.
+const TIERS = [
+  { id: 1, label: "FABLESS",    color: "#f5b731", radius: 1.60, speed: 0.0070, incDeg:  0 },
+  { id: 2, label: "FOUNDRIES",  color: "#ff6b35", radius: 1.88, speed: 0.0062, incDeg: 15 },
+  { id: 3, label: "EQUIPMENT",  color: "#4ecdc4", radius: 2.14, speed: 0.0055, incDeg: 30 },
+  { id: 4, label: "SUBSYSTEMS", color: "#45b7d1", radius: 2.40, speed: 0.0048, incDeg: 45 },
+  { id: 5, label: "COMPONENTS", color: "#7bed9f", radius: 2.66, speed: 0.0042, incDeg: 60 },
+  { id: 6, label: "MATERIALS",  color: "#a29bfe", radius: 2.92, speed: 0.0036, incDeg: 75 },
+  { id: 7, label: "MINING",     color: "#fd79a8", radius: 3.18, speed: 0.0030, incDeg: 90 },
+] as const
 
-  // Keep the active palette current without restarting the simulation —
-  // the draw loop below reads paletteRef.current fresh on every frame.
+// ─── Vertex shader ─────────────────────────────────────────────────────────
+const VERT = /* glsl */ `
+  varying vec2 vUv;
+  varying vec3 vWorldNormal;
+  varying vec3 vWorldPos;
+
+  void main() {
+    vUv          = uv;
+    vWorldNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
+    vWorldPos    = (modelMatrix * vec4(position, 1.0)).xyz;
+    gl_Position  = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`
+
+// ─── Fragment shader ────────────────────────────────────────────────────────
+// Procedural circuit-board texture with:
+//  • hash-based horizontal / vertical trace grid
+//  • animated data-flow pulses
+//  • latitude shimmer bands
+//  • fresnel rim glow
+const FRAG = /* glsl */ `
+  uniform float uTime;
+  uniform vec3  uColor;
+
+  varying vec2 vUv;
+  varying vec3 vWorldNormal;
+  varying vec3 vWorldPos;
+
+  float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+  }
+
+  float circuit(vec2 uv, float scale) {
+    vec2  g    = floor(uv * scale);
+    vec2  fr   = fract(uv * scale);
+    float h    = hash(g);
+    float line = (h > 0.5)
+      ? step(0.47, fr.y) * (1.0 - step(0.53, fr.y))
+      : step(0.47, fr.x) * (1.0 - step(0.53, fr.x));
+    float dot  = step(0.88, 1.0 - length(fr - 0.5) * 2.1);
+    return max(line, dot);
+  }
+
+  void main() {
+    // Fresnel rim
+    vec3  viewDir = normalize(cameraPosition - vWorldPos);
+    float rim     = pow(1.0 - max(dot(vWorldNormal, viewDir), 0.0), 2.5);
+
+    // Circuit layers (fine + coarse)
+    float c = max(circuit(vUv, 22.0), circuit(vUv, 11.0) * 0.5);
+
+    // Animated data-flow pulses (3 scan lines per UV wrap)
+    float py    = fract(vUv.y * 3.0 - uTime * 0.18);
+    float pulse = smoothstep(0.0, 0.04, py) * smoothstep(0.12, 0.06, py) * 0.7;
+
+    // Latitude shimmer
+    float lat = smoothstep(0.85, 1.0,
+      sin(vUv.y * 3.14159 * 10.0 + uTime * 1.2) * 0.5 + 0.5
+    ) * 0.14;
+
+    vec3 col   = uColor * 0.06
+               + uColor * c * 0.48
+               + uColor * pulse
+               + uColor * lat
+               + vec3(1.0) * rim * 0.38;
+
+    float alpha = 0.60 + c * 0.28 + rim * 0.38;
+    gl_FragColor = vec4(col, alpha);
+  }
+`
+
+// ─── Component ──────────────────────────────────────────────────────────────
+export function Hero() {
+  const canvasRef              = useRef<HTMLCanvasElement>(null)
+  const { resolvedTheme }      = useTheme()
+  const [count, setCount]      = useState(0)
+
+  // ── Counter animation: 0 → 700 ──────────────────────────────────────────
   useEffect(() => {
-    paletteRef.current = PALETTES[theme]
-  }, [theme])
+    const TARGET   = 700
+    const DURATION = 2_200        // ms
+    let   rafId: number
+    const start    = performance.now()
 
+    const tick = (now: number) => {
+      const t     = Math.min((now - start) / DURATION, 1)
+      const eased = 1 - Math.pow(1 - t, 3)          // cubic ease-out
+      setCount(Math.round(eased * TARGET))
+      if (t < 1) rafId = requestAnimationFrame(tick)
+    }
+
+    const id = setTimeout(() => { rafId = requestAnimationFrame(tick) }, 400)
+    return () => { clearTimeout(id); cancelAnimationFrame(rafId) }
+  }, [])
+
+  // ── Three.js scene ───────────────────────────────────────────────────────
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
 
-    let W = window.innerWidth
-    let H = window.innerHeight
-    canvas.width = W
-    canvas.height = H
+    const isLight       = resolvedTheme === "light"
+    const sphereColHex  = isLight ? "#0066ff" : "#f5b731"
+    const bgColInt      = isLight ? 0xf5f0e8  : 0x08080f
 
-    // ── Types ─────────────────────────────────────────────────────────────────
-    interface Particle {
-      x: number; y: number; vx: number; vy: number
-      trail: { x: number; y: number }[]
-      life: number; maxLife: number; size: number; fast: boolean
-    }
-    interface Bolt {
-      pts: { x: number; y: number }[]
-      life: number; maxLife: number; bright: boolean
-    }
-    interface Beam {
-      y: number; vy: number; life: number; maxLife: number; alpha: number
-    }
-    interface Blob {
-      x: number; y: number; r: number; vx: number; vy: number; alpha: number; phase: number
-    }
-    interface Shard {
-      pts: { x: number; y: number }[]; phase: number; baseAlpha: number
-    }
+    let cleanupFn: (() => void) | undefined
 
-    // ── Layer 1: Plasma depth blobs ───────────────────────────────────────────
-    const blobs: Blob[] = []
-    for (let i = 0; i < 8; i++) {
-      blobs.push({
-        x: Math.random() * W, y: Math.random() * H,
-        r: 90 + Math.random() * 160,
-        vx: (Math.random() - 0.5) * 0.11, vy: (Math.random() - 0.5) * 0.11,
-        alpha: 0.025 + Math.random() * 0.042,
-        phase: Math.random() * Math.PI * 2,
+    const setup = async () => {
+      const THREE = await import("three")
+
+      // — Renderer —
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false })
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+      renderer.setSize(canvas.offsetWidth, canvas.offsetHeight)
+      renderer.setClearColor(bgColInt, 1)
+
+      // — Scene & Camera —
+      const scene  = new THREE.Scene()
+      const camera = new THREE.PerspectiveCamera(
+        45,
+        canvas.offsetWidth / canvas.offsetHeight,
+        0.1, 100
+      )
+      camera.position.set(0, 0, 7)
+
+      const clock = new THREE.Clock()
+
+      // — Main sphere (GLSL circuit-board shader) —
+      const sphereGeo = new THREE.SphereGeometry(1, 128, 128)
+      const sphereMat = new THREE.ShaderMaterial({
+        uniforms: {
+          uTime:  { value: 0 },
+          uColor: { value: new THREE.Color(sphereColHex) },
+        },
+        vertexShader:   VERT,
+        fragmentShader: FRAG,
+        transparent: true,
       })
-    }
+      const sphere = new THREE.Mesh(sphereGeo, sphereMat)
+      scene.add(sphere)
 
-    // ── Layer 2: Crystal shard lattice ────────────────────────────────────────
-    const shards: Shard[] = []
-    const mkShard = (x: number, y: number): Shard => {
-      const n = 4 + Math.floor(Math.random() * 3)
-      const r = 16 + Math.random() * 60
-      const pts: { x: number; y: number }[] = []
-      for (let i = 0; i < n; i++) {
-        const a = (i / n) * Math.PI * 2 + (Math.random() - 0.5) * 0.75
-        pts.push({
-          x: x + Math.cos(a) * r * (0.5 + Math.random() * 0.95),
-          y: y + Math.sin(a) * r * (0.5 + Math.random() * 0.95),
+      // — Wireframe cage at 1.828× radius —
+      const wireCage = new THREE.Mesh(
+        new THREE.SphereGeometry(1.828, 32, 32),
+        new THREE.MeshBasicMaterial({
+          color:       isLight ? 0x0044bb : 0xf5b731,
+          wireframe:   true,
+          transparent: true,
+          opacity:     0.045,
         })
-      }
-      return { pts, phase: Math.random() * Math.PI * 2, baseAlpha: 0.014 + Math.random() * 0.026 }
-    }
-    const buildShards = () => {
-      shards.length = 0
-      const n = Math.floor((W * H) / 15000)
-      for (let i = 0; i < n; i++) shards.push(mkShard(Math.random() * W, Math.random() * H))
-    }
-    buildShards()
+      )
+      scene.add(wireCage)
 
-    // ── Layer 5: Lightning ────────────────────────────────────────────────────
-    const anchors: { x: number; y: number }[] = []
-    const buildAnchors = () => {
-      anchors.length = 0
-      for (let i = 0; i < 18; i++) anchors.push({ x: Math.random() * W, y: Math.random() * H })
-    }
-    buildAnchors()
-
-    const zigzag = (
-      x1: number, y1: number, x2: number, y2: number,
-      d: number, r: number
-    ): { x: number; y: number }[] => {
-      if (d === 0) return [{ x: x1, y: y1 }, { x: x2, y: y2 }]
-      const mx = (x1 + x2) * 0.5, my = (y1 + y2) * 0.5
-      const dx = x2 - x1, dy = y2 - y1
-      const len = Math.hypot(dx, dy) || 0.001
-      const off = (Math.random() - 0.5) * len * r
-      const nx = mx - (dy / len) * off, ny = my + (dx / len) * off
-      return [
-        ...zigzag(x1, y1, nx, ny, d - 1, r * 0.62).slice(0, -1),
-        ...zigzag(nx, ny, x2, y2, d - 1, r * 0.62),
+      // — 3 concentric BackSide glow layers for the core —
+      const coreLayers = [
+        { r: 0.38, a: 0.55 },
+        { r: 0.58, a: 0.22 },
+        { r: 0.78, a: 0.09 },
       ]
-    }
+      coreLayers.forEach(({ r, a }) => {
+        scene.add(new THREE.Mesh(
+          new THREE.SphereGeometry(r, 32, 32),
+          new THREE.MeshBasicMaterial({
+            color:       isLight ? 0x0066ff : 0xf5b731,
+            side:        THREE.BackSide,
+            transparent: true,
+            opacity:     a,
+          })
+        ))
+      })
 
-    const bolts: Bolt[] = []
-    const spawnBolt = (): Bolt => {
-      const a = anchors[Math.floor(Math.random() * anchors.length)]
-      const b = anchors[Math.floor(Math.random() * anchors.length)]
-      return {
-        pts: zigzag(a.x, a.y, b.x, b.y, 5, 0.46),
-        life: 0, maxLife: 16 + Math.random() * 28,
-        bright: Math.random() > 0.55,
-      }
-    }
+      // — 4 500-point star field —
+      const starPos = new Float32Array(4_500 * 3)
+      for (let i = 0; i < starPos.length; i++) starPos[i] = (Math.random() - 0.5) * 90
+      const starGeo = new THREE.BufferGeometry()
+      starGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3))
+      scene.add(new THREE.Points(
+        starGeo,
+        new THREE.PointsMaterial({ color: 0xffffff, size: 0.032, transparent: true, opacity: 0.55 })
+      ))
 
-    // ── Layer 4: Particles ────────────────────────────────────────────────────
-    // Fast particles travel along crystallographic angles (mineral/rocky feel)
-    const crystalAngles = [0, 60, 90, 120, 180, 240, 270, 300].map(d => d * Math.PI / 180)
-    const particles: Particle[] = []
-    const spawnP = (): Particle => {
-      const fast = Math.random() > 0.58
-      const baseAngle = fast
-        ? crystalAngles[Math.floor(Math.random() * crystalAngles.length)] + (Math.random() - 0.5) * 0.35
-        : Math.random() * Math.PI * 2
-      const spd = fast ? 0.75 + Math.random() * 1.35 : 0.18 + Math.random() * 0.45
-      return {
-        x: Math.random() * W, y: Math.random() * H,
-        vx: Math.cos(baseAngle) * spd, vy: Math.sin(baseAngle) * spd,
-        trail: [], life: 0,
-        maxLife: fast ? 55 + Math.random() * 75 : 95 + Math.random() * 175,
-        size: fast ? 0.7 + Math.random() * 1.0 : 0.4 + Math.random() * 0.95,
-        fast,
-      }
-    }
-    for (let i = 0; i < 100; i++) {
-      const p = spawnP(); p.life = Math.random() * p.maxLife; particles.push(p)
-    }
+      // — 7 orbital particle rings —
+      // Positions are pre-computed with inclination baked in so we can simply
+      // rotate each ring around world-Y to produce clean orbital motion.
+      const orbitRings = TIERS.map(tier => {
+        const incRad   = (tier.incDeg * Math.PI) / 180
+        const N        = 200
+        const pos      = new Float32Array(N * 3)
 
-    // ── Layer 3: Scan beams ───────────────────────────────────────────────────
-    const beams: Beam[] = []
-    const spawnBeam = (): Beam => ({
-      y: 0, vy: 0.42 + Math.random() * 0.88,
-      life: 0, maxLife: H, alpha: 0.048 + Math.random() * 0.092,
-    })
-    for (let i = 0; i < 4; i++) {
-      const b = spawnBeam(); b.y = Math.random() * H; beams.push(b)
-    }
-
-    // ── Render loop ───────────────────────────────────────────────────────────
-    let nextBolt = 0
-    let animId: number
-
-    const draw = (t: number) => {
-      const pal = paletteRef.current
-      // Boosts the soft, low-opacity atmospheric layers (blobs/shards/beam
-      // glow) for visibility against a bright backdrop — see palette notes.
-      const depth = (v: number) => Math.min(1, v * pal.depthAlphaMul)
-
-      ctx.clearRect(0, 0, W, H)
-
-      // ── 1. Plasma depth blobs ───────────────────────────────────────────────
-      for (const blob of blobs) {
-        blob.x += blob.vx; blob.y += blob.vy
-        if (blob.x + blob.r < 0) blob.x = W + blob.r
-        else if (blob.x - blob.r > W) blob.x = -blob.r
-        if (blob.y + blob.r < 0) blob.y = H + blob.r
-        else if (blob.y - blob.r > H) blob.y = -blob.r
-
-        const pulse = 0.62 + 0.38 * Math.sin(t * 0.00078 + blob.phase)
-        const g = ctx.createRadialGradient(blob.x, blob.y, 0, blob.x, blob.y, blob.r)
-        g.addColorStop(0,   `rgba(${pal.base},${depth(blob.alpha * pulse).toFixed(3)})`)
-        g.addColorStop(0.5, `rgba(${pal.mid},${depth(blob.alpha * pulse * 0.35).toFixed(3)})`)
-        g.addColorStop(1,   `rgba(${pal.base},0)`)
-        ctx.fillStyle = g
-        ctx.beginPath(); ctx.arc(blob.x, blob.y, blob.r, 0, Math.PI * 2); ctx.fill()
-      }
-
-      // ── 2. Crystal shard lattice (rocky mineral geometry) ──────────────────
-      for (const s of shards) {
-        const a = s.baseAlpha * (0.42 + 0.58 * (0.5 + 0.5 * Math.sin(t * 0.00062 + s.phase)))
-        ctx.globalAlpha = depth(a)
-        ctx.strokeStyle = `rgb(${pal.base})`
-        ctx.lineWidth = 0.45
-        ctx.beginPath()
-        ctx.moveTo(s.pts[0].x, s.pts[0].y)
-        for (let j = 1; j < s.pts.length; j++) ctx.lineTo(s.pts[j].x, s.pts[j].y)
-        ctx.closePath()
-        ctx.stroke()
-        if (s.pts.length >= 6) {
-          // Subtle mineral fill on larger facets
-          ctx.fillStyle = `rgb(${pal.base})`
-          ctx.globalAlpha = depth(a * 0.14)
-          ctx.fill()
+        for (let j = 0; j < N; j++) {
+          const theta    = (j / N) * Math.PI * 2
+          pos[j * 3]     =  Math.cos(theta) * tier.radius
+          pos[j * 3 + 1] = -Math.sin(theta) * Math.sin(incRad) * tier.radius
+          pos[j * 3 + 2] =  Math.sin(theta) * Math.cos(incRad) * tier.radius
         }
+
+        const geo  = new THREE.BufferGeometry()
+        geo.setAttribute("position", new THREE.BufferAttribute(pos, 3))
+
+        const ring = new THREE.Points(geo, new THREE.PointsMaterial({
+          color:      new THREE.Color(tier.color),
+          size:       tier.id === 1 ? 0.055 : 0.040,
+          transparent: true,
+          opacity:    0.88,
+          blending:   THREE.AdditiveBlending,
+          depthWrite: false,
+        }))
+
+        scene.add(ring)
+        return { mesh: ring, speed: tier.speed }
+      })
+
+      // — Lights —
+      scene.add(new THREE.AmbientLight(0x111122, 0.4))
+
+      const lightA = new THREE.PointLight(0xf5b731, 2.5, 12)
+      lightA.position.set(3, 2, 4)
+      scene.add(lightA)
+
+      const lightB = new THREE.PointLight(0x0066ff, 2.0, 12)
+      lightB.position.set(-3, -2, 3)
+      scene.add(lightB)
+
+      // — Mouse parallax state —
+      let mouseX = 0, mouseY = 0
+      let camX   = 0, camY   = 0
+
+      const onMouseMove = (e: MouseEvent) => {
+        mouseX = (e.clientX / window.innerWidth  - 0.5) * 2
+        mouseY = (e.clientY / window.innerHeight - 0.5) * 2
       }
-      ctx.globalAlpha = 1
+      window.addEventListener("mousemove", onMouseMove)
 
-      // ── 3. Laser scan beams ─────────────────────────────────────────────────
-      for (let i = 0; i < beams.length; i++) {
-        const b = beams[i]
-        b.y += b.vy; b.life += b.vy
-        if (b.life >= b.maxLife) { beams[i] = spawnBeam(); continue }
-        const prog = b.y / H
-        const ea = prog < 0.05 ? prog / 0.05 : prog > 0.92 ? (1 - prog) / 0.08 : 1
-        const al = b.alpha * ea
-
-        // Wide aura
-        const g1 = ctx.createLinearGradient(0, b.y, W, b.y)
-        g1.addColorStop(0,   `rgba(${pal.base},0)`)
-        g1.addColorStop(0.1, `rgba(${pal.base},${depth(al * 0.5).toFixed(3)})`)
-        g1.addColorStop(0.9, `rgba(${pal.base},${depth(al * 0.5).toFixed(3)})`)
-        g1.addColorStop(1,   `rgba(${pal.base},0)`)
-        ctx.fillStyle = g1; ctx.fillRect(0, b.y - 9, W, 18)
-
-        // Main beam body
-        const g2 = ctx.createLinearGradient(0, b.y, W, b.y)
-        g2.addColorStop(0,    `rgba(${pal.base},0)`)
-        g2.addColorStop(0.12, `rgba(${pal.base},${depth(al).toFixed(3)})`)
-        g2.addColorStop(0.88, `rgba(${pal.base},${depth(al).toFixed(3)})`)
-        g2.addColorStop(1,    `rgba(${pal.base},0)`)
-        ctx.fillStyle = g2; ctx.fillRect(0, b.y - 1.5, W, 3)
-
-        // Hot core — deep saturated blue on white, near-white on black
-        const g3 = ctx.createLinearGradient(0, b.y, W, b.y)
-        g3.addColorStop(0,   `rgba(${pal.hot},0)`)
-        g3.addColorStop(0.2, `rgba(${pal.hot},${depth(al * 0.55).toFixed(3)})`)
-        g3.addColorStop(0.8, `rgba(${pal.hot},${depth(al * 0.55).toFixed(3)})`)
-        g3.addColorStop(1,   `rgba(${pal.hot},0)`)
-        ctx.fillStyle = g3; ctx.fillRect(0, b.y - 0.6, W, 1.2)
+      // — Resize handler —
+      const onResize = () => {
+        const w = canvas.offsetWidth, h = canvas.offsetHeight
+        renderer.setSize(w, h)
+        camera.aspect = w / h
+        camera.updateProjectionMatrix()
       }
+      window.addEventListener("resize", onResize)
 
-      // ── 4. Particles with glowing trails ────────────────────────────────────
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i]
-        p.life++; p.x += p.vx; p.y += p.vy
-        if (!p.fast) {
-          p.vx += (Math.random() - 0.5) * 0.032
-          p.vy += (Math.random() - 0.5) * 0.032
-          p.vx *= 0.999; p.vy *= 0.999
-        }
-        const trailMax = p.fast ? 34 : 22
-        p.trail.unshift({ x: p.x, y: p.y })
-        if (p.trail.length > trailMax) p.trail.pop()
-        if (p.life >= p.maxLife) { particles[i] = spawnP(); continue }
+      // — Animation loop —
+      let animId: number
+      const animate = () => {
+        animId = requestAnimationFrame(animate)
+        const t = clock.getElapsedTime()
 
-        const ta = p.life / p.maxLife
-        const base = ta < 0.1 ? ta / 0.1 : ta > 0.76 ? (1 - ta) / 0.24 : 1
+        // Sphere: slow axial spin + shader time
+        sphere.rotation.y          = t * 0.08
+        sphereMat.uniforms.uTime.value = t
 
-        for (let j = 0; j < p.trail.length - 1; j++) {
-          const f = 1 - j / p.trail.length
-          ctx.beginPath()
-          ctx.moveTo(p.trail[j].x, p.trail[j].y)
-          ctx.lineTo(p.trail[j + 1].x, p.trail[j + 1].y)
-          // Hot near the head, brand-hued through the body
-          ctx.strokeStyle = j < 5 ? `rgb(${pal.hot})` : `rgb(${pal.base})`
-          ctx.globalAlpha = f * base * (p.fast ? 0.65 : 0.42)
-          ctx.lineWidth = p.size * f
-          ctx.stroke()
-        }
-        // Brightest particle head
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, p.size * 0.72, 0, Math.PI * 2)
-        ctx.fillStyle = `rgb(${pal.head})`
-        ctx.globalAlpha = base * 0.82
-        ctx.fill()
+        // Cage: slow tumble
+        wireCage.rotation.x = t * 0.042
+        wireCage.rotation.y = t * 0.066
+
+        // Orbital rings: each rotates around Y
+        orbitRings.forEach(({ mesh, speed }) => { mesh.rotation.y += speed })
+
+        // Point lights orbit around sphere
+        lightA.position.x =  Math.cos(t * 0.48) * 4.5
+        lightA.position.z =  Math.sin(t * 0.48) * 4.5
+        lightB.position.x = -Math.cos(t * 0.48) * 4.5
+        lightB.position.z = -Math.sin(t * 0.48) * 4.5
+
+        // Camera parallax: smooth lerp toward cursor (±0.56x, ±0.3y)
+        camX += (mouseX * 0.56 - camX) * 0.04
+        camY += (-mouseY * 0.30 - camY) * 0.04
+        camera.position.x = camX
+        camera.position.y = camY
+        camera.lookAt(0, 0, 0)
+
+        renderer.render(scene, camera)
       }
-      ctx.globalAlpha = 1
+      animate()
 
-      // ── 5. Lightning bolts ───────────────────────────────────────────────────
-      if (t > nextBolt && bolts.length < 6) {
-        bolts.push(spawnBolt())
-        if (Math.random() > 0.42) bolts.push(spawnBolt())
-        nextBolt = t + 230 + Math.random() * 650
+      // — Cleanup closure —
+      cleanupFn = () => {
+        cancelAnimationFrame(animId)
+        window.removeEventListener("mousemove", onMouseMove)
+        window.removeEventListener("resize", onResize)
+        renderer.dispose()
+        sphereGeo.dispose()
+        sphereMat.dispose()
       }
-
-      for (let i = bolts.length - 1; i >= 0; i--) {
-        const bolt = bolts[i]
-        bolt.life++
-        if (bolt.life >= bolt.maxLife) { bolts.splice(i, 1); continue }
-
-        const ta = bolt.life / bolt.maxLife
-        const alpha = ta < 0.08 ? ta / 0.08 : 1 - ta
-        const nPts = Math.max(2, Math.floor(Math.min(1, ta * 2.6) * bolt.pts.length))
-
-        ctx.shadowBlur = bolt.bright ? 22 : 12
-        ctx.shadowColor = `rgb(${pal.base})`
-
-        // Glow pass
-        ctx.beginPath()
-        ctx.moveTo(bolt.pts[0].x, bolt.pts[0].y)
-        for (let j = 1; j < nPts; j++) ctx.lineTo(bolt.pts[j].x, bolt.pts[j].y)
-        ctx.strokeStyle = `rgb(${pal.base})`
-        ctx.globalAlpha = depth(alpha * (bolt.bright ? 0.42 : 0.25))
-        ctx.lineWidth = bolt.bright ? 3.5 : 2
-        ctx.stroke()
-
-        // Bright / pale core
-        ctx.beginPath()
-        ctx.moveTo(bolt.pts[0].x, bolt.pts[0].y)
-        for (let j = 1; j < nPts; j++) ctx.lineTo(bolt.pts[j].x, bolt.pts[j].y)
-        ctx.strokeStyle = bolt.bright ? `rgb(${pal.head})` : `rgb(${pal.dim})`
-        ctx.globalAlpha = alpha * (bolt.bright ? 0.9 : 0.64)
-        ctx.lineWidth = bolt.bright ? 0.85 : 0.5
-        ctx.stroke()
-
-        ctx.shadowBlur = 0
-        ctx.globalAlpha = 1
-      }
-
-      animId = requestAnimationFrame(draw)
     }
 
-    animId = requestAnimationFrame(draw)
+    setup().catch(console.error)
+    return () => { cleanupFn?.() }
+  }, [resolvedTheme])
 
-    const onResize = () => {
-      W = window.innerWidth; H = window.innerHeight
-      canvas.width = W; canvas.height = H
-      buildAnchors(); buildShards()
-    }
-    window.addEventListener("resize", onResize)
-    return () => { cancelAnimationFrame(animId); window.removeEventListener("resize", onResize) }
-  }, [])
+  // ── Styles (new elements only — existing hero classes live in globals.css) ─
+  const S = {
+    section: {
+      position:   "relative" as const,
+      width:      "100%",
+      minHeight:  "100dvh",
+      overflow:   "hidden",
+      display:    "flex",
+      alignItems: "center",
+    },
+    canvas: {
+      position: "absolute" as const,
+      inset:    0,
+      width:    "100%",
+      height:   "100%",
+    },
+    scanlines: {
+      position:        "absolute" as const,
+      inset:           0,
+      pointerEvents:   "none" as const,
+      backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px)",
+      zIndex:          1,
+    },
+    corner: {
+      position:   "absolute" as const,
+      fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
+      fontSize:   "0.6rem",
+      letterSpacing: "0.08em",
+      opacity:    0.4,
+      color:      "var(--yellow, #f5b731)",
+      zIndex:     3,
+    },
+    vertLabel: {
+      position:   "absolute" as const,
+      left:       "1.2rem",
+      top:        "50%",
+      transform:  "translateX(-50%) translateY(-50%) rotate(-90deg)",
+      fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
+      fontSize:   "0.55rem",
+      letterSpacing: "0.22em",
+      opacity:    0.3,
+      color:      "var(--yellow, #f5b731)",
+      whiteSpace: "nowrap" as const,
+      zIndex:     3,
+    },
+    tierRings: {
+      position:       "absolute" as const,
+      bottom:         "2rem",
+      left:           "50%",
+      transform:      "translateX(-50%)",
+      display:        "flex",
+      gap:            "1.4rem",
+      zIndex:         3,
+      flexWrap:       "wrap" as const,
+      justifyContent: "center",
+    },
+    tierItem: {
+      display:    "flex",
+      alignItems: "center",
+      gap:        "0.4rem",
+      fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
+      fontSize:   "0.58rem",
+      letterSpacing: "0.1em",
+      opacity:    0.7,
+      color:      "currentColor",
+    },
+    tierDot: (color: string): React.CSSProperties => ({
+      display:     "inline-block",
+      width:       "6px",
+      height:      "6px",
+      borderRadius: "50%",
+      background:  color,
+      boxShadow:   `0 0 8px ${color}`,
+      flexShrink:  0,
+    }),
+  }
 
-  return <canvas ref={canvasRef} className="flow-canvas" aria-hidden="true" />
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// AMBIENT DEPTH BLOBS — static, heavily-blurred radial color washes behind
-// the hero content. Subtle at night (the canvas already carries the
-// atmosphere there), and the primary "depth" cue by day, where a flat
-// white background would otherwise read as empty. Colored via var(--yellow)
-// so it follows the same amber/blue swap as everything else.
-// ─────────────────────────────────────────────────────────────────────────────
-function HeroDepthBlobs() {
   return (
-    <div className="hero-blur-depth" aria-hidden="true">
-      <span style={{ width: 520, height: 520, top: "-14%", left: "-8%" }} />
-      <span style={{ width: 420, height: 420, top: "6%", right: "-8%" }} />
-      <span style={{ width: 380, height: 380, bottom: "-22%", left: "36%" }} />
-    </div>
-  )
-}
+    <section className="hero" style={S.section} aria-label="Beamed Silicon — supply chain universe">
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SVG SCENE — energy/light elements (laser, LEDs, sparks, rings, edge glow)
-// follow the brand accent via var(--yellow)/var(--amber) so they switch to
-// neon sky blue in day mode. Physical materials (rock facets, robot metal)
-// stay the same dark tones in both themes, like a photographed object would.
-// ─────────────────────────────────────────────────────────────────────────────
-function QuartzLaserScene() {
-  return (
-    <div className="silicon-scene" aria-label="Animated laser beam from robot arm hitting a quartz silicon crystal">
-      <svg viewBox="0 0 480 480" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <radialGradient id="crystalGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="var(--yellow)" stopOpacity="0.4" />
-            <stop offset="60%" stopColor="var(--yellow)" stopOpacity="0.1" />
-            <stop offset="100%" stopColor="var(--yellow)" stopOpacity="0" />
-          </radialGradient>
-          <radialGradient id="impactGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
-            <stop offset="30%" stopColor="var(--yellow)" stopOpacity="0.7" />
-            <stop offset="100%" stopColor="var(--yellow)" stopOpacity="0" />
-          </radialGradient>
-          <linearGradient id="laserGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="var(--yellow)" stopOpacity="0.1" />
-            <stop offset="50%" stopColor="var(--yellow)" stopOpacity="0.8" />
-            <stop offset="90%" stopColor="#ffffff" stopOpacity="1" />
-            <stop offset="100%" stopColor="var(--yellow)" stopOpacity="0.6" />
-          </linearGradient>
-          <linearGradient id="crystalFace1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#2a2a20" />
-            <stop offset="50%" stopColor="#1a1a10" />
-            <stop offset="100%" stopColor="#0f0f08" />
-          </linearGradient>
-          <linearGradient id="crystalFace2" x1="100%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#3a3a28" />
-            <stop offset="50%" stopColor="#252518" />
-            <stop offset="100%" stopColor="#1a1a10" />
-          </linearGradient>
-          <linearGradient id="crystalFace3" x1="50%" y1="0%" x2="50%" y2="100%">
-            <stop offset="0%" stopColor="#454530" />
-            <stop offset="100%" stopColor="#2a2a1c" />
-          </linearGradient>
-          <linearGradient id="armGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#2a2a20" />
-            <stop offset="50%" stopColor="#1a1a12" />
-            <stop offset="100%" stopColor="#0f0f08" />
-          </linearGradient>
-          <filter id="glow">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-          <filter id="strongGlow">
-            <feGaussianBlur stdDeviation="8" result="blur" />
-            <feMerge><feMergeNode in="blur" /><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-          <filter id="crystalGlowFilter">
-            <feGaussianBlur stdDeviation="4" result="blur" />
-            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-        </defs>
+      {/* ── Three.js canvas ──────────────────────────────────────────── */}
+      <canvas ref={canvasRef} style={S.canvas} aria-hidden="true" />
 
-        {/* Background grid */}
-        <g opacity="0.06" stroke="var(--yellow)" strokeWidth="0.5">
-          {Array.from({ length: 12 }, (_, i) => (
-            <line key={`h${i}`} x1="20" y1={60 + i * 32} x2="460" y2={60 + i * 32} />
-          ))}
-          {Array.from({ length: 14 }, (_, i) => (
-            <line key={`v${i}`} x1={20 + i * 34} y1="60" x2={20 + i * 34} y2="420" />
-          ))}
-        </g>
+      {/* ── Scanline depth texture ───────────────────────────────────── */}
+      <div style={S.scanlines} aria-hidden="true" />
 
-        {/* Ambient glow behind crystal */}
-        <circle cx="300" cy="280" r="120" fill="url(#crystalGlow)" className="crystal-ambient" />
+      {/* ── Corner technical readouts ────────────────────────────────── */}
+      <div
+        style={{ ...S.corner, top: "1.2rem", left: "1.5rem" }}
+        aria-hidden="true"
+      >
+        SYS:SILICON-INTELLIGENCE-v2026.06
+      </div>
+      <div
+        style={{ ...S.corner, bottom: "1.2rem", right: "1.5rem" }}
+        aria-hidden="true"
+      >
+        NODE:ACTIVE · TIERS:7/7
+      </div>
 
-        {/* ── ROBOT ARM ── */}
-        <g className="robot-arm">
-          <rect x="20" y="100" width="40" height="60" rx="4" fill="url(#armGrad)" stroke="var(--yellow)" strokeWidth="1" strokeOpacity="0.4" />
-          <rect x="25" y="105" width="30" height="8" rx="2" fill="var(--yellow)" fillOpacity="0.15" />
-          <circle cx="40" cy="130" r="6" fill="#0f0f08" stroke="var(--yellow)" strokeWidth="1" strokeOpacity="0.5" />
-          <g className="arm-segment-1">
-            <rect x="38" y="85" width="80" height="18" rx="3" fill="url(#armGrad)" stroke="var(--yellow)" strokeWidth="0.8" strokeOpacity="0.3" />
-            <circle cx="40" cy="94" r="8" fill="#1a1a12" stroke="var(--yellow)" strokeWidth="1" strokeOpacity="0.4" />
-            <circle cx="40" cy="94" r="4" fill="var(--yellow)" fillOpacity="0.3" />
-            <rect x="55" y="89" width="50" height="3" rx="1" fill="var(--yellow)" fillOpacity="0.12" />
-            <rect x="55" y="95" width="50" height="3" rx="1" fill="var(--yellow)" fillOpacity="0.08" />
-          </g>
-          <g className="elbow-joint">
-            <circle cx="118" cy="94" r="12" fill="#1a1a12" stroke="var(--yellow)" strokeWidth="1" strokeOpacity="0.5" />
-            <circle cx="118" cy="94" r="6" fill="#0f0f08" stroke="var(--yellow)" strokeWidth="0.8" strokeOpacity="0.4" />
-            <circle cx="118" cy="94" r="3" fill="var(--yellow)" fillOpacity="0.4" />
-          </g>
-          <g className="arm-segment-2">
-            <path d="M118 94 L180 180" stroke="url(#armGrad)" strokeWidth="16" strokeLinecap="round" />
-            <path d="M118 94 L180 180" stroke="var(--yellow)" strokeWidth="1" strokeOpacity="0.3" strokeLinecap="round" />
-            <circle cx="140" cy="125" r="4" fill="var(--yellow)" fillOpacity="0.15" stroke="var(--yellow)" strokeWidth="0.5" strokeOpacity="0.3" />
-            <circle cx="160" cy="155" r="3" fill="var(--yellow)" fillOpacity="0.1" stroke="var(--yellow)" strokeWidth="0.5" strokeOpacity="0.2" />
-          </g>
-          <g className="wrist-joint">
-            <circle cx="180" cy="180" r="10" fill="#1a1a12" stroke="var(--yellow)" strokeWidth="1" strokeOpacity="0.5" />
-            <circle cx="180" cy="180" r="5" fill="var(--yellow)" fillOpacity="0.3" />
-          </g>
-          <g className="laser-head">
-            <rect x="170" y="185" width="35" height="22" rx="3" fill="url(#armGrad)" stroke="var(--yellow)" strokeWidth="1" strokeOpacity="0.5" />
-            <rect x="172" y="188" width="2" height="16" fill="var(--yellow)" fillOpacity="0.15" />
-            <rect x="176" y="188" width="2" height="16" fill="var(--yellow)" fillOpacity="0.12" />
-            <rect x="180" y="188" width="2" height="16" fill="var(--yellow)" fillOpacity="0.1" />
-            <circle cx="198" cy="196" r="6" fill="#0a0a00" stroke="var(--yellow)" strokeWidth="1.5" />
-            <circle cx="198" cy="196" r="3" className="laser-led" fill="var(--yellow)" filter="url(#glow)" />
-            <circle cx="174" cy="203" r="2" className="status-led" fill="var(--yellow)" />
-          </g>
-        </g>
+      {/* ── Left-edge vertical supply-chain label ────────────────────── */}
+      <div style={S.vertLabel} aria-hidden="true">
+        SUPPLY CHAIN INTELLIGENCE
+      </div>
 
-        {/* ── LASER BEAM ── */}
-        <g className="laser-beam-group" filter="url(#strongGlow)">
-          <line className="laser-beam" x1="204" y1="196" x2="260" y2="250"
-            stroke="url(#laserGrad)" strokeWidth="6" strokeLinecap="round" />
-          <line className="laser-beam-core" x1="204" y1="196" x2="260" y2="250"
-            stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
-        </g>
+      {/* ── Main hero content ─────────────────────────────────────────── */}
+      <div className="hero-inner" style={{ position: "relative", zIndex: 2, width: "100%" }}>
 
-        {/* ── QUARTZ CRYSTAL ── */}
-        <g className="crystal-group">
-          <polygon points="310,380 250,350 270,240 310,200 350,220 370,320 330,370"
-            fill="#000" opacity="0.5" transform="translate(5, 5)" />
-          <polygon className="crystal-face" points="270,320 270,240 310,200 310,280"
-            fill="url(#crystalFace1)" stroke="var(--yellow)" strokeWidth="0.8" strokeOpacity="0.4" />
-          <polygon className="crystal-face" points="310,200 350,220 350,300 310,280"
-            fill="url(#crystalFace2)" stroke="var(--yellow)" strokeWidth="0.8" strokeOpacity="0.5" />
-          <polygon className="crystal-face" points="350,300 350,220 370,250 370,330"
-            fill="url(#crystalFace1)" stroke="var(--yellow)" strokeWidth="0.8" strokeOpacity="0.3" />
-          <polygon className="crystal-face" points="310,280 350,300 370,330 330,360 290,340 270,320"
-            fill="url(#crystalFace3)" stroke="var(--yellow)" strokeWidth="1" strokeOpacity="0.6" />
-          <polygon className="crystal-top" points="270,240 310,200 350,220 330,250 290,240"
-            fill="#3a3a28" stroke="var(--yellow)" strokeWidth="1.2" strokeOpacity="0.7" />
-          <g stroke="var(--yellow)" strokeWidth="0.5" strokeOpacity="0.2">
-            <line x1="290" y1="250" x2="310" y2="340" />
-            <line x1="330" y1="240" x2="340" y2="330" />
-            <line x1="280" y1="280" x2="350" y2="290" />
-          </g>
-          <circle cx="300" cy="290" r="4" fill="var(--yellow)" fillOpacity="0.08" />
-          <circle cx="330" cy="270" r="3" fill="var(--yellow)" fillOpacity="0.06" />
-          <circle cx="290" cy="310" r="2" fill="var(--yellow)" fillOpacity="0.1" />
-          <line x1="275" y1="260" x2="285" y2="300" stroke="#ffffff" strokeWidth="1" strokeOpacity="0.15" />
-          <line x1="345" y1="240" x2="355" y2="280" stroke="#ffffff" strokeWidth="0.8" strokeOpacity="0.1" />
-        </g>
+        {/*
+          ── Headline (Haraguchi-style: fearless scale, deliberate negative space)
+          Font size uses clamp so it scales from 320 px mobile → 4 K desktop.
+          CSS classes are preserved from the original hero so global styles apply.
+        */}
+        <h1
+          className="hero-headline"
+          style={{
+            fontSize:      "clamp(44px, 6.8vw, 96px)",
+            fontWeight:    900,
+            lineHeight:    0.92,
+            letterSpacing: "-0.03em",
+            margin:        0,
+          }}
+          aria-label="Every tier of the silicon universe"
+        >
+          <span style={{ display: "block" }}>EVERY TIER</span>
+          <span style={{ display: "block" }}>OF THE</span>
+          <span style={{ display: "block" }}>SILICON</span>
+          <span style={{ display: "block" }}>UNIVERSE</span>
+        </h1>
 
-        {/* ── IMPACT POINT ── */}
-        <g className="impact-point">
-          <circle cx="300" cy="230" r="20" fill="url(#impactGlow)" className="impact-glow" />
-          <circle cx="300" cy="230" r="8" fill="#ffffff" fillOpacity="0.8" className="impact-core" />
-        </g>
+        {/* hero-sub paragraph — class name preserved; "350" updated to "700" */}
+        <p className="hero-sub">
+          700 companies mapped across 7 supply chain tiers — from rare-earth mining
+          to finished silicon. Track capital, risk, and innovation across the full
+          semiconductor stack.
+        </p>
 
-        {/* Energy rings */}
-        <circle className="energy-ring-1" cx="300" cy="230" r="10" stroke="var(--yellow)" fill="none" />
-        <circle className="energy-ring-2" cx="300" cy="230" r="10" stroke="var(--yellow)" fill="none" />
-        <circle className="energy-ring-3" cx="300" cy="230" r="10" stroke="var(--amber)" fill="none" />
-
-        {/* Sparks */}
-        <g className="sparks">
-          <circle className="spark-1" cx="300" cy="230" r="2" fill="var(--yellow)" />
-          <circle className="spark-2" cx="300" cy="230" r="1.5" fill="#ffffff" />
-          <circle className="spark-3" cx="300" cy="230" r="2" fill="var(--yellow)" />
-          <circle className="spark-4" cx="300" cy="230" r="1.5" fill="var(--amber)" />
-        </g>
-
-        {/* Frame corners */}
-        <g stroke="var(--yellow)" strokeWidth="1" strokeOpacity="0.2" fill="none">
-          <path d="M20 20 L60 20 L60 50" />
-          <path d="M460 20 L420 20 L420 50" />
-          <path d="M20 460 L60 460 L60 430" />
-          <path d="M460 460 L420 460 L420 430" />
-        </g>
-
-        {/* Platform */}
-        <ellipse cx="310" cy="385" rx="80" ry="15" fill="#0f0f08" stroke="var(--yellow)" strokeWidth="0.8" strokeOpacity="0.3" />
-        <ellipse cx="310" cy="385" rx="60" ry="10" fill="none" stroke="var(--yellow)" strokeWidth="0.5" strokeOpacity="0.15" />
-      </svg>
-    </div>
-  )
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HERO
-// ─────────────────────────────────────────────────────────────────────────────
-export function Hero() {
-  return (
-    <>
-      <ElectricBackground />
-      <section className="hero">
-        <HeroDepthBlobs />
-        <div className="wrap hero-inner">
-          <div className="hero-text">
-            <div className="eyebrow">THE DEFINITIVE SEMICONDUCTOR INTELLIGENCE PLATFORM</div>
-            <h1>
-              Every Tier of the
-              <br />
-              Semiconductor Universe,
-              <br />
-              <span className="c">Mapped &amp; Tracked</span>
-            </h1>
-            <p className="hero-sub">
-              350 companies. 7 supply chain tiers. From the quartz mines of North Carolina to the AI accelerators in
-              your data center. The world&apos;s most complete semiconductor knowledge base — updated daily.
-            </p>
-            <div className="hero-stats">
-              <div>
-                <div className="stat-n">350</div>
-                <div className="stat-l">COMPANIES TRACKED</div>
-              </div>
-              <div>
-                <div className="stat-n">7</div>
-                <div className="stat-l">SUPPLY CHAIN TIERS</div>
-              </div>
-              <div>
-                <div className="stat-n">22+</div>
-                <div className="stat-l">COUNTRIES COVERED</div>
-              </div>
-              <div>
-                <div className="stat-n">Daily</div>
-                <div className="stat-l">NEWS UPDATES</div>
-              </div>
-            </div>
-          </div>
-          <QuartzLaserScene />
+        {/* CTA buttons */}
+        <div className="hero-cta">
+          <Link href="/companies" className="btn btn-primary">
+            Explore Companies
+          </Link>
+          <Link href="/markets" className="btn btn-ghost">
+            Markets
+          </Link>
+          <Link href="/products" className="btn btn-ghost">
+            Products
+          </Link>
         </div>
-      </section>
-    </>
+      </div>
+
+      {/*
+        ── hero-stats: right-side monospace stats readout
+        class names preserved (stat-n, stat-label) so existing CSS applies.
+        The "stat-n" for companies now shows the animated counter.
+      */}
+      <div
+        className="hero-stats"
+        style={{ position: "absolute", right: "2rem", top: "50%", transform: "translateY(-50%)", zIndex: 2 }}
+        aria-label="Key statistics"
+      >
+        <div className="stat-item">
+          <div className="stat-n">{count}</div>
+          <div className="stat-label">COMPANIES</div>
+        </div>
+        <div className="stat-item">
+          <div className="stat-n">7</div>
+          <div className="stat-label">TIERS</div>
+        </div>
+        <div className="stat-item">
+          <div className="stat-n">32+</div>
+          <div className="stat-label">COUNTRIES</div>
+        </div>
+        <div className="stat-item">
+          <div className="stat-n">24/7</div>
+          <div className="stat-label">FREQUENCY</div>
+        </div>
+      </div>
+
+      {/* ── Bottom tier ring indicators ───────────────────────────────── */}
+      <div style={S.tierRings} aria-hidden="true">
+        {TIERS.map(tier => (
+          <div key={tier.id} style={S.tierItem}>
+            <span style={S.tierDot(tier.color)} />
+            <span>{tier.label}</span>
+          </div>
+        ))}
+      </div>
+
+    </section>
   )
 }
+
+export default Hero
