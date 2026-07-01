@@ -128,7 +128,7 @@ const CSS = `
 `
 
 // ─── Main component ───────────────────────────────────────────────────────
-export default function App() {
+export function Hero() {
   const canvasRef = useRef(null)
   const [count, setCount]   = useState(0)
   const [blink, setBlink]   = useState(true)
