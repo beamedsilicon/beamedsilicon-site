@@ -152,7 +152,7 @@ export function Hero() {
 
   // Counter 0 → 700
   useEffect(() => {
-    let raf
+    let raf: number | null = null
     const t0 = performance.now()
     const run = now => {
       const t = Math.min((now - t0) / 2200, 1)
