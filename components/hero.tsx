@@ -160,7 +160,7 @@ export function Hero() {
       if (t < 1) raf = requestAnimationFrame(run)
     }
     const timer = setTimeout(() => { raf = requestAnimationFrame(run) }, 400)
-    return () => { clearTimeout(timer); cancelAnimationFrame(raf) }
+    return () => { clearTimeout(timer); if (raf !== null) cancelAnimationFrame(raf) }
   }, [])
 
   // IntersectionObserver for .rv reveals
