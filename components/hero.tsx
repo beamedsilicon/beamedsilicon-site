@@ -129,7 +129,8 @@ const CSS = `
 
 // ─── Main component ───────────────────────────────────────────────────────
 export function Hero() {
-  const canvasRef = useRef(null)
+  // Added standard typing for the HTML5 canvas element reference
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const [count, setCount]   = useState(0)
   const [blink, setBlink]   = useState(true)
 
@@ -139,7 +140,7 @@ export function Hero() {
     link.rel  = "stylesheet"
     link.href = "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700;800&display=swap"
     document.head.appendChild(link)
-    return () => document.head.removeChild(link)
+    return () => { document.head.removeChild(link) }
   }, [])
 
   // Blinking cursor
@@ -150,9 +151,9 @@ export function Hero() {
 
   // Counter 0 → 700
   useEffect(() => {
-    let raf
+    let raf: number
     const t0 = performance.now()
-    const run = now => {
+    const run = (now: number) => {
       const t = Math.min((now - t0) / 2200, 1)
       setCount(Math.round((1 - Math.pow(1 - t, 3)) * 700))
       if (t < 1) raf = requestAnimationFrame(run)
@@ -177,7 +178,10 @@ export function Hero() {
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    let cleanup
+    
+    // FIXED: Explicitly typed 'cleanup' to handle async assignment cleanly
+    let cleanup: (() => void) | undefined;
+    
     ;(async () => {
       const THREE = await import("three")
 
@@ -250,7 +254,7 @@ export function Hero() {
 
       // Mouse parallax
       let mx=0, my=0, cx=0, cy=0
-      const onMM = e => { mx=(e.clientX/window.innerWidth-.5)*2; my=(e.clientY/window.innerHeight-.5)*2 }
+      const onMM = (e: MouseEvent) => { mx=(e.clientX/window.innerWidth-.5)*2; my=(e.clientY/window.innerHeight-.5)*2 }
       const onRz = () => {
         const w=canvas.offsetWidth, h=canvas.offsetHeight
         R.setSize(w,h); cam.aspect=w/h; cam.updateProjectionMatrix()
@@ -258,7 +262,7 @@ export function Hero() {
       window.addEventListener("mousemove", onMM)
       window.addEventListener("resize",    onRz)
 
-      let aid
+      let aid: number
       const anim = () => {
         aid = requestAnimationFrame(anim)
         const t = clock.getElapsedTime()
@@ -287,11 +291,11 @@ export function Hero() {
   // Doubled for seamless marquee
   const T2 = [...TIERS, ...TIERS]
 
-  const Dot = ({ color, size=6 }) => (
+  const Dot = ({ color, size=6 }: { color: string; size?: number }) => (
     <span style={{ display:"inline-block", width:size, height:size, borderRadius:"50%", background:color, boxShadow:`0 0 8px ${color}`, flexShrink:0 }} />
   )
 
-  const Divider = ({ delay="0s" }) => (
+  const Divider = ({ delay="0s" }: { delay?: string }) => (
     <div style={{ height:1, margin:"0 2.5rem", background:`linear-gradient(90deg,transparent,${ACCENT},transparent)`, opacity:.18, animation:`pulse 5s ${delay} ease-in-out infinite` }} />
   )
 
@@ -306,7 +310,7 @@ export function Hero() {
 
       {/* ═══════════════════════════════════════════════════════════
           NAV — sticky, minimal
-      ════════════════════════════════════════════════════════════ */}
+       ════════════════════════════════════════════════════════════ */}
       <nav style={{
         position:"sticky", top:0, zIndex:400,
         padding:"1.3rem 2rem",
@@ -320,8 +324,8 @@ export function Hero() {
         <div style={{ display:"flex", gap:"2.4rem" }}>
           {["TIERS","MARKETS","COMPANIES","INTEL"].map(l => (
             <a key={l} href="#" style={{ fontSize:".55rem", letterSpacing:".18em", color:DIM, transition:"color .18s" }}
-              onMouseEnter={e=>e.target.style.color=ACCENT}
-              onMouseLeave={e=>e.target.style.color=DIM}>
+              onMouseEnter={e=>(e.target as HTMLAnchorElement).style.color=ACCENT}
+              onMouseLeave={e=>(e.target as HTMLAnchorElement).style.color=DIM}>
               {l}
             </a>
           ))}
@@ -330,7 +334,7 @@ export function Hero() {
 
       {/* ═══════════════════════════════════════════════════════════
           HERO — Three.js canvas, full viewport
-      ════════════════════════════════════════════════════════════ */}
+       ════════════════════════════════════════════════════════════ */}
       <section style={{ position:"relative", width:"100%", height:"calc(100vh - 50px)", overflow:"hidden" }}>
         <canvas ref={canvasRef} style={{ position:"absolute", inset:0, width:"100%", height:"100%" }} aria-hidden="true" />
 
@@ -389,7 +393,7 @@ export function Hero() {
 
       {/* ═══════════════════════════════════════════════════════════
           TICKER — Haraguchi-style scrolling tier strip
-      ════════════════════════════════════════════════════════════ */}
+       ════════════════════════════════════════════════════════════ */}
       <div style={{ overflow:"hidden", borderTop:`1px solid rgba(245,183,49,.14)`, borderBottom:`1px solid rgba(245,183,49,.14)`, background:"rgba(0,0,0,.25)", padding:".7rem 0", userSelect:"none" }}>
         <div style={{ display:"flex", width:"max-content", animation:"marquee 32s linear infinite" }}>
           {T2.map((tier, i) => (
@@ -405,7 +409,7 @@ export function Hero() {
 
       {/* ═══════════════════════════════════════════════════════════
           THE NUMBER — Haraguchi portrait-scale statement
-      ════════════════════════════════════════════════════════════ */}
+       ════════════════════════════════════════════════════════════ */}
       <section style={{ padding:"14vh 8vw 10vh", minHeight:"65vh", display:"flex", alignItems:"center" }}>
         <div className="rv" style={{ width:"100%" }}>
           <div style={{ fontSize:".52rem", letterSpacing:".32em", color:ACCENT, opacity:.65, marginBottom:"2.4rem" }}>
@@ -432,7 +436,7 @@ export function Hero() {
 
       {/* ═══════════════════════════════════════════════════════════
           MANIFESTO — editorial statement at fearless scale
-      ════════════════════════════════════════════════════════════ */}
+       ════════════════════════════════════════════════════════════ */}
       <section style={{ padding:"12vh 8vw", display:"flex", alignItems:"center" }}>
         <p className="rv manifesto" style={{
           maxWidth:1000, fontSize:"clamp(1.3rem,3vw,3.6rem)",
@@ -451,7 +455,7 @@ export function Hero() {
 
       {/* ═══════════════════════════════════════════════════════════
           TIERS — raw tabular breakdown
-      ════════════════════════════════════════════════════════════ */}
+       ════════════════════════════════════════════════════════════ */}
       <section style={{ padding:"10vh 6vw 12vh" }}>
         {/* Section header */}
         <div className="rv" style={{ display:"flex", alignItems:"center", gap:"1.4rem", marginBottom:"3.5rem" }}>
@@ -491,7 +495,7 @@ export function Hero() {
 
       {/* ═══════════════════════════════════════════════════════════
           NODE LOG — Haraguchi date-log format
-      ════════════════════════════════════════════════════════════ */}
+       ════════════════════════════════════════════════════════════ */}
       <section style={{ padding:"10vh 8vw 12vh" }}>
         <div className="rv" style={{ display:"flex", alignItems:"center", gap:"1.4rem", marginBottom:"3.5rem" }}>
           <span style={{ fontSize:".52rem", letterSpacing:".28em", color:ACCENT, opacity:.65, flexShrink:0 }}>NODE LOG</span>
@@ -518,7 +522,7 @@ export function Hero() {
 
       {/* ═══════════════════════════════════════════════════════════
           FOOTER
-      ════════════════════════════════════════════════════════════ */}
+       ════════════════════════════════════════════════════════════ */}
       <footer style={{
         padding:"1.8rem 2.5rem",
         display:"flex", justifyContent:"space-between", alignItems:"center",
@@ -530,8 +534,8 @@ export function Hero() {
         <div style={{ display:"flex", gap:"2rem" }}>
           {["TIERS","MARKETS","COMPANIES","INTEL"].map(l => (
             <a key={l} href="#" style={{ fontSize:".5rem", letterSpacing:".18em", color:DIMMER, transition:"color .18s" }}
-              onMouseEnter={e=>e.target.style.color=DIM}
-              onMouseLeave={e=>e.target.style.color=DIMMER}>
+              onMouseEnter={e=>(e.target as HTMLAnchorElement).style.color=DIM}
+              onMouseLeave={e=>(e.target as HTMLAnchorElement).style.color=DIMMER}>
               {l}
             </a>
           ))}
@@ -543,7 +547,3 @@ export function Hero() {
     </div>
   )
 }
-
-
-
-
