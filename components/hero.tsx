@@ -139,7 +139,9 @@ export function Hero() {
     link.rel  = "stylesheet"
     link.href = "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700;800&display=swap"
     document.head.appendChild(link)
-    return () => document.head.removeChild(link)
+    return () => {
+      document.head.removeChild(link)
+    }
   }, [])
 
   // Blinking cursor
