@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect, useRef } from "react"
 
 // ─── GLSL shaders (preserved exactly from hero) ───────────────────────────
