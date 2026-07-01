@@ -154,7 +154,7 @@ export function Hero() {
   useEffect(() => {
     let raf: number | null = null
     const t0 = performance.now()
-    const run = now => {
+    const run = (now: number) => {
       const t = Math.min((now - t0) / 2200, 1)
       setCount(Math.round((1 - Math.pow(1 - t, 3)) * 700))
       if (t < 1) raf = requestAnimationFrame(run)
