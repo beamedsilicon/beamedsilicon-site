@@ -250,6 +250,12 @@ body{top:0!important;}
 .sc-search input:focus{border-color:var(--border-yellow);}
 .sc-search-note{font-family:var(--mono);font-size:10px;color:var(--text-2);}
 
+/* ── REGION FILTER (Supply Chain Explorer) ── */
+.region-filter{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:28px;}
+.region-chip{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:0.04em;padding:6px 14px;background:var(--bg-card);border:1px solid var(--border-md);border-radius:100px;color:var(--text-1);cursor:pointer;transition:all var(--t);}
+.region-chip:hover{color:var(--yellow);border-color:var(--border-yellow);}
+.region-chip.active{color:var(--bg-0);background:var(--yellow);border-color:var(--yellow);}
+
 #tier-container{display:flex;flex-direction:column;gap:3px;}
 .tier-panel{border-radius:var(--rl);overflow:hidden;border:1px solid var(--border);transition:border-color var(--t);}
 .tier-hd{display:flex;align-items:center;gap:16px;padding:18px 24px;cursor:pointer;background:var(--bg-card);transition:background var(--t);user-select:none;}

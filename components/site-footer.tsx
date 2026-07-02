@@ -1,10 +1,6 @@
-'use client'
-
-import { useTheme } from './theme-provider'
+import Link from "next/link"
 
 export function SiteFooter() {
-  const { theme, toggleTheme } = useTheme()
-
   return (
     <footer>
       <div className="wrap">
@@ -22,19 +18,19 @@ export function SiteFooter() {
             <div className="ft-col-h">COVERAGE</div>
             <ul className="ft-links">
               <li>
-                <a href="#">Fabless &amp; Design</a>
+                <Link href="/#tier-1">Fabless &amp; Design</Link>
               </li>
               <li>
-                <a href="#">Foundries &amp; OSATs</a>
+                <Link href="/#tier-2">Foundries &amp; OSATs</Link>
               </li>
               <li>
-                <a href="#">Equipment (SME)</a>
+                <Link href="/#tier-3">Equipment (SME)</Link>
               </li>
               <li>
-                <a href="#">Materials &amp; Gases</a>
+                <Link href="/#tier-6">Materials &amp; Gases</Link>
               </li>
               <li>
-                <a href="#">Mining &amp; Extraction</a>
+                <Link href="/#tier-7">Mining &amp; Extraction</Link>
               </li>
             </ul>
           </div>
@@ -42,19 +38,19 @@ export function SiteFooter() {
             <div className="ft-col-h">REGIONS</div>
             <ul className="ft-links">
               <li>
-                <a href="#">East Asia</a>
+                <Link href="/?region=east-asia#sc-map">East Asia</Link>
               </li>
               <li>
-                <a href="#">United States</a>
+                <Link href="/?region=united-states#sc-map">United States</Link>
               </li>
               <li>
-                <a href="#">Europe</a>
+                <Link href="/?region=europe#sc-map">Europe</Link>
               </li>
               <li>
-                <a href="#">Southeast Asia</a>
+                <Link href="/?region=southeast-asia#sc-map">Southeast Asia</Link>
               </li>
               <li>
-                <a href="#">Rest of World</a>
+                <Link href="/?region=rest-of-world#sc-map">Rest of World</Link>
               </li>
             </ul>
           </div>
@@ -74,7 +70,7 @@ export function SiteFooter() {
                 <a href="#">Privacy</a>
               </li>
               <li>
-                <a href="#">Contact</a>
+                <Link href="/#newsletter">Contact</Link>
               </li>
             </ul>
           </div>
@@ -82,26 +78,13 @@ export function SiteFooter() {
         <div className="ft-bot">
           <div className="ft-copy">© 2026 Beamed Silicon Intelligence. All rights reserved.</div>
           <div className="ft-soc">
-            <button
-              onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect()
-                toggleTheme({
-                  x: rect.left + rect.width / 2,
-                  y: rect.top + rect.height / 2,
-                })
-              }}
-              className="soc-btn"
-              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              {theme === 'dark' ? '☀️' : '🌙'}
-            </button>
-            <a href="https://x.com/beamedsilicon" className="soc-btn" aria-label="X (Twitter)">
+            <a href="#" className="soc-btn" aria-label="X (Twitter)">
               𝕏
             </a>
             <a href="#" className="soc-btn" aria-label="LinkedIn">
               in
             </a>
-            <a href="#" className="soc-btn" aria-label="RSS feed">
+            <a href="/feed.xml" className="soc-btn" aria-label="RSS feed">
               RSS
             </a>
           </div>
