@@ -3,18 +3,23 @@
 /**
  * components/world-map.tsx
  *
- * World map with a pin for every country that hosts companies tracked in
- * lib/tiers.ts (the real dataset — 700 companies across 8 tiers). Pin size
- * scales with company count. Pins pulse gently and stagger in on load.
- * Hovering (or focusing) a pin shows the country, its company count, and a
- * sample of company names. Clicking a pin jumps to the Supply Chain
- * Explorer filtered by that country's region.
+ * Interactive world map with a pin for every country that hosts companies
+ * tracked in lib/tiers.ts (the real dataset). Pin size scales with company
+ * count.
+ *
+ * Interactivity:
+ *  - Scroll / pinch to zoom (toward the cursor), drag to pan
+ *  - Zoom in / out / reset buttons
+ *  - Hovering a country with tracked companies highlights it and shows the
+ *    tooltip; hovering a pin does the same
+ *  - Clicking a pin (or highlighted country) jumps to the Supply Chain
+ *    Explorer filtered by that region
  *
  * Rendered with d3-geo (Natural Earth projection) + topojson-client over
  * the world-atlas 110m dataset — no hand-drawn geography.
  */
 
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState, useCallback, useEffect } from "react"
 import { geoNaturalEarth1, geoPath } from "d3-geo"
 import { feature } from "topojson-client"
 import type { FeatureCollection, Geometry } from "geojson"
@@ -58,8 +63,46 @@ const COUNTRY_INFO: Record<string, { name: string; coords: [number, number] }> =
   BR: { name: "Brazil", coords: [-51.9, -10.8] },
 }
 
+// world-atlas 110m property names → our country codes (for hover highlight)
+const ATLAS_NAME_TO_CODE: Record<string, string> = {
+  "United States of America": "US",
+  Japan: "JP",
+  China: "CN",
+  Taiwan: "TW",
+  Germany: "DE",
+  "South Korea": "KR",
+  "United Kingdom": "UK",
+  Netherlands: "NL",
+  Switzerland: "CH",
+  France: "FR",
+  Canada: "CA",
+  Australia: "AU",
+  Israel: "IL",
+  Sweden: "SE",
+  Malaysia: "MY",
+  India: "IN",
+  Singapore: "SG",
+  Norway: "NO",
+  Belgium: "BE",
+  Austria: "AT",
+  Italy: "IT",
+  Chile: "CL",
+  Russia: "RU",
+  Finland: "FI",
+  Turkey: "TR",
+  "Saudi Arabia": "SA",
+  Poland: "PL",
+  Peru: "PE",
+  Kazakhstan: "KZ",
+  Indonesia: "ID",
+  Denmark: "DK",
+  Brazil: "BR",
+}
+
 const W = 960
 const H = 470
+const MIN_ZOOM = 1
+const MAX_ZOOM = 8
 
 interface CountryPin {
   code: string
@@ -71,10 +114,27 @@ interface CountryPin {
   r: number
 }
 
+interface Transform {
+  k: number
+  tx: number
+  ty: number
+}
+
+function clampTransform(t: Transform): Transform {
+  const k = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, t.k))
+  // Keep the map covering the viewport: 0 >= tx >= W - W*k
+  const tx = Math.min(0, Math.max(W - W * k, t.tx))
+  const ty = Math.min(0, Math.max(H - H * k, t.ty))
+  return { k, tx, ty }
+}
+
 export function WorldMap() {
   const [active, setActive] = useState<CountryPin | null>(null)
+  const [transform, setTransform] = useState<Transform>({ k: 1, tx: 0, ty: 0 })
+  const svgRef = useRef<SVGSVGElement>(null)
+  const dragRef = useRef<{ x: number; y: number; tx: number; ty: number; moved: boolean } | null>(null)
 
-  const { landPaths, pins } = useMemo(() => {
+  const { landPaths, pins, pinByCode } = useMemo(() => {
     const projection = geoNaturalEarth1()
       .scale(W / 5.4)
       .translate([W / 2, H / 2 + 18])
@@ -92,7 +152,11 @@ export function WorldMap() {
 
     const landPaths = countries.features
       .filter((f) => f.properties?.name !== "Antarctica")
-      .map((f, i) => ({ d: path(f) ?? "", key: i }))
+      .map((f, i) => ({
+        d: path(f) ?? "",
+        key: i,
+        code: ATLAS_NAME_TO_CODE[f.properties?.name ?? ""] ?? null,
+      }))
 
     // Aggregate the real company list per country
     const byCountry = new Map<string, string[]>()
@@ -123,8 +187,126 @@ export function WorldMap() {
     }
     // Draw small pins last so they stay hoverable above big ones
     pins.sort((a, b) => b.count - a.count)
-    return { landPaths, pins }
+    const pinByCode = new Map(pins.map((p) => [p.code, p]))
+    return { landPaths, pins, pinByCode }
   }, [])
+
+  // ─── Zoom / pan helpers ──────────────────────────────────────────────────
+
+  /** Convert a client (mouse) position to un-transformed SVG coordinates. */
+  const toSvgPoint = useCallback((clientX: number, clientY: number) => {
+    const svg = svgRef.current
+    if (!svg) return { x: 0, y: 0 }
+    const rect = svg.getBoundingClientRect()
+    return {
+      x: ((clientX - rect.left) / rect.width) * W,
+      y: ((clientY - rect.top) / rect.height) * H,
+    }
+  }, [])
+
+  const zoomBy = useCallback(
+    (factor: number, cx = W / 2, cy = H / 2) => {
+      setTransform((t) => {
+        const k = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, t.k * factor))
+        const scale = k / t.k
+        // Zoom toward (cx, cy) in viewport space
+        return clampTransform({
+          k,
+          tx: cx - (cx - t.tx) * scale,
+          ty: cy - (cy - t.ty) * scale,
+        })
+      })
+    },
+    [],
+  )
+
+  // Wheel zoom needs a non-passive listener to preventDefault page scroll
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg) return
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      const rect = svg.getBoundingClientRect()
+      const cx = ((e.clientX - rect.left) / rect.width) * W
+      const cy = ((e.clientY - rect.top) / rect.height) * H
+      zoomBy(e.deltaY < 0 ? 1.25 : 0.8, cx, cy)
+    }
+    svg.addEventListener("wheel", onWheel, { passive: false })
+    return () => svg.removeEventListener("wheel", onWheel)
+  }, [zoomBy])
+
+  const onPointerDown = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+    if (e.button !== 0) return
+    const svg = svgRef.current
+    if (!svg) return
+    svg.setPointerCapture(e.pointerId)
+    setTransform((t) => {
+      dragRef.current = { x: e.clientX, y: e.clientY, tx: t.tx, ty: t.ty, moved: false }
+      return t
+    })
+  }, [])
+
+  const onPointerMove = useCallback(
+    (e: React.PointerEvent<SVGSVGElement>) => {
+      const drag = dragRef.current
+      if (!drag) return
+      const svg = svgRef.current
+      if (!svg) return
+      const rect = svg.getBoundingClientRect()
+      const dx = ((e.clientX - drag.x) / rect.width) * W
+      const dy = ((e.clientY - drag.y) / rect.height) * H
+      if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 3) drag.moved = true
+      setTransform((t) => clampTransform({ k: t.k, tx: drag.tx + dx, ty: drag.ty + dy }))
+    },
+    [],
+  )
+
+  const onPointerUp = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+    svgRef.current?.releasePointerCapture(e.pointerId)
+    // Suppress the click that follows a drag so pins don't navigate accidentally
+    if (dragRef.current?.moved) {
+      const suppress = (ev: Event) => {
+        ev.preventDefault()
+        ev.stopPropagation()
+      }
+      svgRef.current?.addEventListener("click", suppress, { capture: true, once: true })
+    }
+    dragRef.current = null
+  }, [])
+
+  const onDoubleClick = useCallback(
+    (e: React.MouseEvent<SVGSVGElement>) => {
+      const { x, y } = toSvgPoint(e.clientX, e.clientY)
+      zoomBy(1.7, x, y)
+    },
+    [toSvgPoint, zoomBy],
+  )
+
+  const reset = useCallback(() => setTransform({ k: 1, tx: 0, ty: 0 }), [])
+
+  const { k, tx, ty } = transform
+  // Keep pins & strokes visually constant while zooming
+  const inv = 1 / k
+  // Tooltip position in viewport space (percentages of the rendered box)
+  const tipX = active ? ((active.x * k + tx) / W) * 100 : 0
+  const tipY = active ? ((active.y * k + ty) / H) * 100 : 0
+
+  const zoomBtnStyle: React.CSSProperties = {
+    width: 32,
+    height: 32,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "var(--bg-card)",
+    border: "1px solid var(--border-md)",
+    borderRadius: "var(--r)",
+    color: "var(--text-0)",
+    fontFamily: "var(--mono)",
+    fontSize: 15,
+    lineHeight: 1,
+    cursor: "pointer",
+    transition: "var(--t)",
+  }
 
   return (
     <div style={{ position: "relative", width: "100%" }}>
@@ -147,6 +329,9 @@ export function WorldMap() {
           transform-box: fill-box;
           pointer-events: none;
         }
+        .map-land { transition: fill .15s ease; }
+        .map-land[data-active="true"] { fill: var(--yellow-bg-strong, var(--yellow-bg)); cursor: pointer; }
+        .map-zoom-btn:hover { border-color: var(--border-yellow); color: var(--yellow); }
         @media (prefers-reduced-motion: reduce) {
           .map-pin { animation: none; }
           .pin-ring { animation: none; opacity: 0; }
@@ -154,54 +339,130 @@ export function WorldMap() {
       `}</style>
 
       <svg
+        ref={svgRef}
         viewBox={`0 0 ${W} ${H}`}
         role="img"
-        aria-label="World map showing the headquarters countries of all tracked semiconductor supply chain companies"
-        style={{ display: "block", width: "100%", height: "auto" }}
+        aria-label="Interactive world map showing the headquarters countries of all tracked semiconductor supply chain companies. Scroll to zoom, drag to pan."
+        style={{
+          display: "block",
+          width: "100%",
+          height: "auto",
+          cursor: dragRef.current ? "grabbing" : "grab",
+          touchAction: "none",
+          userSelect: "none",
+        }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        onDoubleClick={onDoubleClick}
       >
-        {/* Land */}
-        <g>
-          {landPaths.map(({ d, key }) => (
-            <path
-              key={key}
-              d={d}
-              fill="var(--yellow-bg)"
-              stroke="var(--border-md)"
-              strokeWidth={0.5}
-            />
-          ))}
-        </g>
+        <g transform={`translate(${tx} ${ty}) scale(${k})`}>
+          {/* Land — countries with tracked companies highlight on hover */}
+          <g>
+            {landPaths.map(({ d, key, code }) => {
+              const pin = code ? pinByCode.get(code) : undefined
+              return (
+                <path
+                  key={key}
+                  className="map-land"
+                  data-active={active !== null && pin !== undefined && active.code === pin.code}
+                  d={d}
+                  fill="var(--yellow-bg)"
+                  stroke="var(--border-md)"
+                  strokeWidth={0.5 * inv}
+                  onMouseEnter={pin ? () => setActive(pin) : undefined}
+                  onMouseLeave={pin ? () => setActive(null) : undefined}
+                />
+              )
+            })}
+          </g>
 
-        {/* Company pins */}
-        <g>
-          {pins.map((pin, i) => (
-            <a
-              key={pin.code}
-              href={`/supply-chain?region=${regionOf(pin.code)}`}
-              className="map-pin"
-              style={{ animationDelay: `${0.3 + i * 0.05}s`, transformOrigin: `${pin.x}px ${pin.y}px` }}
-              onMouseEnter={() => setActive(pin)}
-              onMouseLeave={() => setActive(null)}
-              onFocus={() => setActive(pin)}
-              onBlur={() => setActive(null)}
-              aria-label={`${pin.name}: ${pin.count} ${pin.count === 1 ? "company" : "companies"}`}
-            >
-              <circle className="pin-ring" cx={pin.x} cy={pin.y} r={pin.r} fill="none" stroke="var(--yellow)" strokeWidth={1} />
-              <circle className="pin-core" cx={pin.x} cy={pin.y} r={pin.r} fill="var(--yellow)" opacity={0.75} />
-              <circle cx={pin.x} cy={pin.y} r={1.6} fill="var(--ink)" />
-            </a>
-          ))}
+          {/* Company pins — sized in screen space (divided by zoom) */}
+          <g>
+            {pins.map((pin, i) => (
+              <a
+                key={pin.code}
+                href={`/supply-chain?region=${regionOf(pin.code)}`}
+                className="map-pin"
+                style={{ animationDelay: `${0.3 + i * 0.05}s`, transformOrigin: `${pin.x}px ${pin.y}px` }}
+                onMouseEnter={() => setActive(pin)}
+                onMouseLeave={() => setActive(null)}
+                onFocus={() => setActive(pin)}
+                onBlur={() => setActive(null)}
+                aria-label={`${pin.name}: ${pin.count} ${pin.count === 1 ? "company" : "companies"}`}
+              >
+                <circle
+                  className="pin-ring"
+                  cx={pin.x}
+                  cy={pin.y}
+                  r={pin.r * inv}
+                  fill="none"
+                  stroke="var(--yellow)"
+                  strokeWidth={1 * inv}
+                />
+                <circle className="pin-core" cx={pin.x} cy={pin.y} r={pin.r * inv} fill="var(--yellow)" opacity={0.75} />
+                <circle cx={pin.x} cy={pin.y} r={1.6 * inv} fill="var(--ink)" />
+              </a>
+            ))}
+          </g>
         </g>
       </svg>
 
+      {/* Zoom controls */}
+      <div
+        style={{
+          position: "absolute",
+          right: 10,
+          bottom: 10,
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+          zIndex: 4,
+        }}
+      >
+        <button type="button" className="map-zoom-btn" style={zoomBtnStyle} onClick={() => zoomBy(1.5)} aria-label="Zoom in">
+          +
+        </button>
+        <button type="button" className="map-zoom-btn" style={zoomBtnStyle} onClick={() => zoomBy(1 / 1.5)} aria-label="Zoom out">
+          −
+        </button>
+        <button
+          type="button"
+          className="map-zoom-btn"
+          style={{ ...zoomBtnStyle, fontSize: 11, opacity: k === 1 ? 0.4 : 1 }}
+          onClick={reset}
+          aria-label="Reset zoom"
+          disabled={k === 1}
+        >
+          ⟲
+        </button>
+      </div>
+
+      {/* Zoom hint */}
+      <div
+        style={{
+          position: "absolute",
+          left: 10,
+          bottom: 10,
+          fontFamily: "var(--mono)",
+          fontSize: ".54rem",
+          letterSpacing: ".16em",
+          color: "var(--text-2)",
+          pointerEvents: "none",
+        }}
+      >
+        SCROLL TO ZOOM · DRAG TO PAN
+      </div>
+
       {/* Tooltip */}
-      {active && (
+      {active && tipX >= 0 && tipX <= 100 && tipY >= 0 && tipY <= 100 && (
         <div
           style={{
             position: "absolute",
-            left: `${(active.x / W) * 100}%`,
-            top: `${(active.y / H) * 100}%`,
-            transform: `translate(${active.x > W * 0.72 ? "-105%" : "12px"}, -50%)`,
+            left: `${tipX}%`,
+            top: `${tipY}%`,
+            transform: `translate(${tipX > 72 ? "-105%" : "12px"}, -50%)`,
             background: "var(--bg-card)",
             border: "1px solid var(--border-yellow)",
             borderRadius: "var(--r)",
@@ -213,7 +474,15 @@ export function WorldMap() {
             boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
           }}
         >
-          <div style={{ fontFamily: "var(--mono)", fontSize: 11, letterSpacing: ".12em", color: "var(--yellow)", textTransform: "uppercase" }}>
+          <div
+            style={{
+              fontFamily: "var(--mono)",
+              fontSize: 11,
+              letterSpacing: ".12em",
+              color: "var(--yellow)",
+              textTransform: "uppercase",
+            }}
+          >
             {active.name}
           </div>
           <div style={{ fontSize: 20, fontWeight: 700, color: "var(--text-0)", lineHeight: 1.3 }}>

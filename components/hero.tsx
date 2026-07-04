@@ -62,9 +62,9 @@ export function Hero() {
 
         .hero-grid {
           display: grid;
-          grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-          gap: 3rem;
-          align-items: center;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 2rem 3rem;
+          align-items: end;
         }
         @media (max-width: 900px) {
           .hero-grid { grid-template-columns: 1fr; gap: 2rem; }
