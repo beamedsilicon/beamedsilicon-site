@@ -1,7 +1,17 @@
 import { NextResponse } from "next/server"
+import { SITE_URL } from "@/lib/site-config"
 
-const SITE = "https://beamedsilicon.qzz.io"
+const SITE = SITE_URL
 
+// NOTE: the 4th item below links to /analysis/tsmc-2nm-cowos-constraint,
+// which is not a real slug in lib/full-articles.ts (same class of bug the
+// old app/sitemap.ts had — see scripts/validate_data.py). The homepage's
+// FeaturedAnalysis card (components/featured-analysis.tsx) links to the
+// exact same nonexistent slug, so this is currently a live 404 from two
+// places at once. The closest real article on the same subject is
+// "cowos-advanced-packaging-chiplets" — worth checking whether that's what
+// this was meant to point at, or whether the article itself is just
+// missing and needs writing.
 const ITEMS = [
   {
     title: "HBM4 Shortage Set to Deepen: SK Hynix and Samsung Warn Supply Gap Persists into 2027",

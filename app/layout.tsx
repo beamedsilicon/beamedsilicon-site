@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, IBM_Plex_Sans, Source_Serif_4 } from "next/font/google"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { TranslateProvider } from "@/components/translate-provider"
+import { SITE_URL } from "@/lib/site-config"
 import "./globals.css"
 
 const plexSans = IBM_Plex_Sans({
@@ -20,7 +21,7 @@ const sourceSerif = Source_Serif_4({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://beamedsilicon.qzz.io"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Beamed Silicon — Semiconductor Supply Chain Intelligence",
     template: "%s | Beamed Silicon",
@@ -40,7 +41,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://beamedsilicon.qzz.io",
+    url: SITE_URL,
     siteName: "Beamed Silicon",
     title: "Beamed Silicon — Semiconductor Supply Chain Intelligence",
     description:
@@ -73,7 +74,7 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://beamedsilicon.qzz.io",
+    canonical: SITE_URL,
   },
 }
 
@@ -92,11 +93,11 @@ const websiteLd = {
   // system a safe option to land on if it isn't confident enough to pick the
   // brand name outright — recommended for newer/lower-authority domains.
   alternateName: ["Beamed Silicon Intelligence", "beamedsilicon.qzz.io"],
-  url: "https://beamedsilicon.qzz.io",
+  url: SITE_URL,
   description: "Semiconductor supply chain intelligence — 350 companies, 7 tiers, from quartz mines to AI accelerators.",
   potentialAction: {
     "@type": "SearchAction",
-    target: "https://beamedsilicon.qzz.io/?search={search_term_string}",
+    target: `${SITE_URL}/?search={search_term_string}`,
     "query-input": "required name=search_term_string",
   },
 }
@@ -106,7 +107,7 @@ const jsonLd = {
   "@type": "Organization",
   name: "Beamed Silicon Intelligence",
   alternateName: ["Beamed Silicon", "beamedsilicon.qzz.io"],
-  url: "https://beamedsilicon.qzz.io",
+  url: SITE_URL,
   description:
     "Semiconductor supply chain intelligence platform covering 350 companies across 7 tiers from raw material extraction to fabless chip design.",
   // External profile(s) corroborating this is a real, distinct entity —

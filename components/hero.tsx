@@ -128,11 +128,19 @@ const CSS = `
 `
 
 // ─── Main component ───────────────────────────────────────────────────────
+// NOTE: this component used to render its own sticky <nav> at the top and
+// its own <footer> at the bottom — a full second header and footer baked
+// into what's meant to be a homepage *section*. Since app/page.tsx already
+// wraps this in the shared <SiteHeader/> and <SiteFooter/>, every page that
+// rendered <Hero/> was shipping two stacked sticky nav bars and a footer
+// sitting in the middle of the page, both pointing at dead `href="#"`
+// placeholders instead of real routes. Both have been removed here; the
+// hero now starts at the Three.js canvas section and ends after the node
+// log, and composes cleanly inside the real site chrome.
 export function Hero() {
   // Added standard typing for the HTML5 canvas element reference
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const [count, setCount]   = useState(0)
-  const [blink, setBlink]   = useState(true)
 
   // Load JetBrains Mono
   useEffect(() => {
@@ -141,12 +149,6 @@ export function Hero() {
     link.href = "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700;800&display=swap"
     document.head.appendChild(link)
     return () => { document.head.removeChild(link) }
-  }, [])
-
-  // Blinking cursor
-  useEffect(() => {
-    const id = setInterval(() => setBlink(b => !b), 530)
-    return () => clearInterval(id)
   }, [])
 
   // Counter 0 → 700
@@ -300,37 +302,13 @@ export function Hero() {
   )
 
   return (
-    <div style={{ background:BG, color:TEXT, fontFamily:MONO, minHeight:"100vh", overflowX:"hidden" }}>
+    <div style={{ background:BG, color:TEXT, fontFamily:MONO, overflowX:"hidden" }}>
       <style>{CSS}</style>
 
       {/* ── Global CRT scanline layer ───────────────────────────── */}
       <div style={{ position:"fixed", inset:0, pointerEvents:"none", zIndex:500,
         backgroundImage:"repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.032) 2px,rgba(0,0,0,0.032) 4px)", opacity:.7 }}
         aria-hidden="true" />
-
-      {/* ═══════════════════════════════════════════════════════════
-          NAV — sticky, minimal
-       ════════════════════════════════════════════════════════════ */}
-      <nav style={{
-        position:"sticky", top:0, zIndex:400,
-        padding:"1.3rem 2rem",
-        display:"flex", justifyContent:"space-between", alignItems:"center",
-        background:"rgba(8,8,15,.82)", backdropFilter:"blur(10px)",
-        borderBottom:`1px solid ${DIMMER}`,
-      }}>
-        <div style={{ fontSize:".62rem", letterSpacing:".22em", color:ACCENT, fontWeight:700, opacity:.95 }}>
-          BEAMED SILICON
-        </div>
-        <div style={{ display:"flex", gap:"2.4rem" }}>
-          {["TIERS","MARKETS","COMPANIES","INTEL"].map(l => (
-            <a key={l} href="#" style={{ fontSize:".55rem", letterSpacing:".18em", color:DIM, transition:"color .18s" }}
-              onMouseEnter={e=>(e.target as HTMLAnchorElement).style.color=ACCENT}
-              onMouseLeave={e=>(e.target as HTMLAnchorElement).style.color=DIM}>
-              {l}
-            </a>
-          ))}
-        </div>
-      </nav>
 
       {/* ═══════════════════════════════════════════════════════════
           HERO — Three.js canvas, full viewport
@@ -363,9 +341,9 @@ export function Hero() {
               700 companies mapped across 7 supply chain tiers — from rare-earth mining to finished silicon. Track capital, risk, and innovation across the full semiconductor stack.
             </p>
             <div style={{ marginTop:"2.4rem", display:"flex", gap:".8rem", flexWrap:"wrap" }}>
-              <a href="#" className="cta-btn cta-btn-primary">Explore Companies</a>
-              <a href="#" className="cta-btn cta-btn-ghost">Markets</a>
-              <a href="#" className="cta-btn cta-btn-ghost">Products</a>
+              <a href="/supply-chain" className="cta-btn cta-btn-primary">Explore Companies</a>
+              <a href="/markets" className="cta-btn cta-btn-ghost">Markets</a>
+              <a href="/products" className="cta-btn cta-btn-ghost">Products</a>
             </div>
           </div>
         </div>
@@ -519,31 +497,6 @@ export function Hero() {
           </div>
         ))}
       </section>
-
-      {/* ═══════════════════════════════════════════════════════════
-          FOOTER
-       ════════════════════════════════════════════════════════════ */}
-      <footer style={{
-        padding:"1.8rem 2.5rem",
-        display:"flex", justifyContent:"space-between", alignItems:"center",
-        borderTop:`1px solid ${DIMMER}`, flexWrap:"wrap", gap:"1rem",
-      }}>
-        <div style={{ fontSize:".55rem", letterSpacing:".18em", color:DIM }}>
-          BEAMED SILICON · ©2026 · ALL RIGHTS RESERVED
-        </div>
-        <div style={{ display:"flex", gap:"2rem" }}>
-          {["TIERS","MARKETS","COMPANIES","INTEL"].map(l => (
-            <a key={l} href="#" style={{ fontSize:".5rem", letterSpacing:".18em", color:DIMMER, transition:"color .18s" }}
-              onMouseEnter={e=>(e.target as HTMLAnchorElement).style.color=DIM}
-              onMouseLeave={e=>(e.target as HTMLAnchorElement).style.color=DIMMER}>
-              {l}
-            </a>
-          ))}
-        </div>
-        <div style={{ fontSize:".5rem", letterSpacing:".18em", color:ACCENT, opacity:.45, fontVariantNumeric:"tabular-nums" }}>
-          SYS:ACTIVE · TIERS:7/7{blink ? "█" : "\u00a0"}
-        </div>
-      </footer>
     </div>
   )
 }

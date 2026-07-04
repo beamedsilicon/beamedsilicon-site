@@ -1,7 +1,30 @@
+"use client"
+
+import { useState } from "react"
 import Link from "next/link"
 
 import { LanguageSelector } from "@/components/language-selector"
+
+// Single source for the nav items so the desktop bar and the mobile
+// drawer can't drift apart from each other.
+const NAV_ITEMS = [
+  { href: "/news", label: "News" },
+  { href: "/supply-chain", label: "Supply Chain" },
+  { href: "/products", label: "Products" },
+  { href: "/companies", label: "Companies" },
+  { href: "/markets", label: "Markets" },
+  { href: "/analysis", label: "Analysis" },
+  { href: "/policy", label: "Policy" },
+]
+
 export function SiteHeader() {
+  // globals.css already defines .nav-hamburger / .ham-bar / .mobile-nav /
+  // .mobile-nav-links / .mobile-nav-cta, and hides .nav-links at
+  // max-width:600px — but nothing ever rendered a hamburger button or a
+  // drawer, so below 600px the site had no navigation at all. This wires
+  // up that existing CSS; it doesn't add any new classes or styles.
+  const [mobileOpen, setMobileOpen] = useState(false)
+
   return (
     <header>
       <div className="wrap">
@@ -25,20 +48,47 @@ export function SiteHeader() {
             </Link>
           </div>
           <ul className="nav-links">
-            <li><Link href="/news">News</Link></li>
-            <li><Link href="/supply-chain">Supply Chain</Link></li>
-            <li><Link href="/products">Products</Link></li>
-            <li><Link href="/companies">Companies</Link></li>
-            <li><Link href="/markets">Markets</Link></li>
-            <li><Link href="/analysis">Analysis</Link></li>
-            <li><Link href="/policy">Policy</Link></li>
+            {NAV_ITEMS.map((item) => (
+              <li key={item.href}>
+                <Link href={item.href}>{item.label}</Link>
+              </li>
+            ))}
           </ul>
-               <LanguageSelector />
+          <LanguageSelector />
           <Link href="/#newsletter" className="btn-sub">
             CONTACT ME
           </Link>
+          <button
+            type="button"
+            className="nav-hamburger"
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-nav-drawer"
+            onClick={() => setMobileOpen((open) => !open)}
+          >
+            <span className={`ham-bar${mobileOpen ? " open" : ""}`} />
+            <span className={`ham-bar${mobileOpen ? " open" : ""}`} />
+            <span className={`ham-bar${mobileOpen ? " open" : ""}`} />
+          </button>
         </nav>
       </div>
+
+      {mobileOpen && (
+        <div className="mobile-nav" id="mobile-nav-drawer">
+          <ul className="mobile-nav-links">
+            {NAV_ITEMS.map((item) => (
+              <li key={item.href}>
+                <Link href={item.href} onClick={() => setMobileOpen(false)}>
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <Link href="/#newsletter" className="btn-sub mobile-nav-cta" onClick={() => setMobileOpen(false)}>
+            CONTACT ME
+          </Link>
+        </div>
+      )}
     </header>
   )
 }

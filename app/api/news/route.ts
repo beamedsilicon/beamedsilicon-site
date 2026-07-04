@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { TIERS } from "@/lib/tiers"
 
-const API_KEY = "pub_75b628abdbd1493a94235040b3bccd39"
+// Falls back to the key that used to be hardcoded here so local dev keeps
+// working with zero setup, but production should set NEWSDATA_API_KEY in
+// its environment instead. That old key was committed to source control,
+// so treat it as already compromised — rotate it on newsdata.io's
+// dashboard and set the replacement as an env var rather than pasting a
+// new key back into this file.
+// `||` (not `??`) deliberately — an env var present but set to "" should
+// still fall back, and NEWSDATA_API_KEY should never legitimately be empty.
+const API_KEY = process.env.NEWSDATA_API_KEY || "pub_75b628abdbd1493a94235040b3bccd39"
 const BASE    = "https://newsdata.io/api/1/news"
 
 /**

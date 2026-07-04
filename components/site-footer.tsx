@@ -1,4 +1,9 @@
 import Link from "next/link"
+import { TIERS } from "@/lib/tiers"
+
+// Was hardcoded to "350 companies" — see components/ticker.tsx for the
+// same fix and why (lib/tiers.ts actually has 700 entries).
+const TOTAL_COMPANIES = TIERS.reduce((sum, t) => sum + t.cos.length, 0)
 
 export function SiteFooter() {
   return (
@@ -10,7 +15,7 @@ export function SiteFooter() {
               BEAMED<span className="dot">·</span>SILICON
             </span>
             <p>
-              The world&apos;s most complete semiconductor intelligence — 350 companies, 7 tiers, from rare earth mines
+              The world&apos;s most complete semiconductor intelligence — {TOTAL_COMPANIES} companies, 7 tiers, from rare earth mines
               to finished silicon.
             </p>
           </div>
