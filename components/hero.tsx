@@ -39,11 +39,12 @@ export function Hero() {
 
         .hero-cta {
           display: inline-block;
-          padding: .7rem 1.5rem;
+          padding: .7rem 1.6rem;
           font-family: var(--mono);
-          font-size: .68rem;
-          letter-spacing: .16em;
-          border-radius: var(--r);
+          font-size: .66rem;
+          letter-spacing: .14em;
+          text-transform: uppercase;
+          border-radius: 100px;
           transition: var(--t);
         }
         .hero-cta-primary {
@@ -52,13 +53,26 @@ export function Hero() {
           border: 1px solid var(--yellow);
           font-weight: 700;
         }
-        .hero-cta-primary:hover { filter: brightness(1.12); }
+        .hero-cta-primary:hover { box-shadow: 0 0 20px var(--glow); transform: translateY(-1px); }
         .hero-cta-ghost {
           background: transparent;
           color: var(--text-1);
           border: 1px solid var(--border-md);
         }
-        .hero-cta-ghost:hover { color: var(--text-0); border-color: var(--border-yellow); }
+        .hero-cta-ghost:hover { color: var(--ink); background: var(--text-0); border-color: var(--text-0); }
+
+        /* Hairline stat cells — flush blocks separated by 1px seams */
+        .hero-stat-row {
+          display: inline-grid;
+          grid-auto-flow: column;
+          gap: 1px;
+          background: var(--border-md);
+          border: 1px solid var(--border-md);
+        }
+        .hero-stat-cell {
+          background: var(--bg-0);
+          padding: 1.1rem 1.8rem 1rem;
+        }
 
         .hero-grid {
           display: grid;
@@ -97,16 +111,17 @@ export function Hero() {
             <h1
               className="hero-rise"
               style={{
-                fontFamily: "var(--mono)",
-                fontSize: "clamp(2rem, 4.6vw, 3.6rem)",
-                fontWeight: 800,
-                lineHeight: 1.02,
-                letterSpacing: "-.02em",
+                fontFamily: "var(--display)",
+                fontSize: "clamp(2.6rem, 6vw, 5rem)",
+                fontWeight: 500,
+                lineHeight: 0.98,
+                letterSpacing: "-.03em",
                 color: "var(--text-0)",
                 animationDelay: ".08s",
+                textTransform: "uppercase",
               }}
             >
-              EVERY TIER OF THE SILICON UNIVERSE
+              Every tier of the silicon universe<span style={{ color: "var(--yellow)" }}>.</span>
             </h1>
 
             <p
@@ -139,17 +154,15 @@ export function Hero() {
               </a>
             </div>
 
-            <div
-              className="hero-rise"
-              style={{ marginTop: "2.4rem", display: "flex", gap: "2.5rem", flexWrap: "wrap", animationDelay: ".32s" }}
-            >
+            <div className="hero-rise hero-stat-row" style={{ marginTop: "2.4rem", animationDelay: ".32s" }}>
               {stats.map(([value, label]) => (
-                <div key={label}>
+                <div key={label} className="hero-stat-cell">
                   <div
                     style={{
-                      fontFamily: "var(--mono)",
-                      fontSize: "clamp(1.5rem, 2.6vw, 2.1rem)",
-                      fontWeight: 700,
+                      fontFamily: "var(--display)",
+                      fontSize: "clamp(1.7rem, 2.8vw, 2.4rem)",
+                      fontWeight: 500,
+                      letterSpacing: "-.02em",
                       color: "var(--text-0)",
                       lineHeight: 1,
                     }}
@@ -162,7 +175,7 @@ export function Hero() {
                       fontSize: ".56rem",
                       letterSpacing: ".22em",
                       color: "var(--text-1)",
-                      marginTop: ".4rem",
+                      marginTop: ".45rem",
                     }}
                   >
                     {label}

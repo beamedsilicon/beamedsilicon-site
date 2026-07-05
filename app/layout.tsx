@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next"
-import { IBM_Plex_Mono, IBM_Plex_Sans, Source_Serif_4 } from "next/font/google"
+import { IBM_Plex_Mono, IBM_Plex_Sans, Source_Serif_4, Space_Grotesk } from "next/font/google"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { TranslateProvider } from "@/components/translate-provider"
@@ -19,6 +19,12 @@ const sourceSerif = Source_Serif_4({
   subsets: ["latin"], weight: ["300", "400", "600"],
   style: ["normal", "italic"],
   variable: "--font-source-serif", display: "swap",
+})
+// Display grotesque for the big editorial headlines — the signature
+// typeface of the brutalist revamp.
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"], weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-space-grotesk", display: "swap",
 })
 
 export const metadata: Metadata = {
@@ -80,7 +86,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#0a0a00",
+  themeColor: "#060606",
   width: "device-width",
   initialScale: 1,
 }
@@ -130,7 +136,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${plexSans.variable} ${plexMono.variable} ${sourceSerif.variable}`}
+      className={`${plexSans.variable} ${plexMono.variable} ${sourceSerif.variable} ${spaceGrotesk.variable}`}
     >
       <head>
         <script
