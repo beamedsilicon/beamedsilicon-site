@@ -91,9 +91,9 @@ export default async function RiskPage() {
                 lineHeight: 1.75,
               }}
             >
-              An AI analyst reads the day&apos;s semiconductor, geopolitics, and materials news, then scores
-              risk across all 7 supply chain tiers and every major manufacturing region. Runs automatically
-              every day — no human in the loop.
+              An automated signal engine scans the day&apos;s semiconductor, geopolitics, and materials
+              news, then scores risk across all 7 supply chain tiers and every major manufacturing
+              region. Runs automatically every day — no human in the loop.
             </p>
             {latest && (
               <p
