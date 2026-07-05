@@ -10,6 +10,7 @@ import { LanguageSelector } from "@/components/language-selector"
 const NAV_ITEMS = [
   { href: "/news", label: "News" },
   { href: "/supply-chain", label: "Supply Chain" },
+  { href: "/risk", label: "Risk" },
   { href: "/products", label: "Products" },
   { href: "/companies", label: "Companies" },
   { href: "/markets", label: "Markets" },
