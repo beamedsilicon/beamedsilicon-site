@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, IBM_Plex_Sans, Source_Serif_4 } from "next/font/google"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { TranslateProvider } from "@/components/translate-provider"
+import { ScrollReveal } from "@/components/scroll-reveal"
 import { SITE_URL } from "@/lib/site-config"
 import "./globals.css"
 
@@ -142,6 +143,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <TranslateProvider>
             {children}
           </TranslateProvider>
+          <ScrollReveal />
           <SpeedInsights />
         </ThemeProvider>
       </body>
