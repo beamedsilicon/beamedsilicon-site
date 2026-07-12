@@ -1167,33 +1167,53 @@ const RENDERERS: Record<string, ToolRenderer> = {
 const CSS = `
 .wb-shell{ font-family:var(--sans); }
 .wb-shell, .wb-shell *{ box-sizing:border-box; }
-.wb-app{ display:flex; min-height:100vh; }
 
-.wb-sidebar{
-  width:250px; flex-shrink:0;
-  background:var(--bg-card);
-  border-right:1px solid var(--border);
-  padding:24px 16px;
-  position:sticky; top:62px; max-height:calc(100vh - 62px); overflow-y:auto;
+.wb-topbar-wrap{
+  position:sticky; top:62px; z-index:10;
+  background:var(--bg-0);
+  border-bottom:1px solid var(--border);
 }
-.wb-brand{ font-family:var(--mono); font-weight:600; font-size:16px; letter-spacing:-0.01em; display:flex; align-items:center; gap:10px; margin-bottom:4px; color:var(--text-0); }
-.wb-brand-mark{ width:18px; height:18px; border-radius:3px; background:var(--yellow); flex-shrink:0; }
-.wb-brand-sub{ font-size:11px; color:var(--text-2); margin-bottom:26px; font-family:var(--mono); }
-
-.wb-navlabel{ font-family:var(--mono); font-size:9.5px; text-transform:uppercase; letter-spacing:.14em; color:var(--text-2); margin:18px 4px 6px; }
-.wb-navlabel:first-of-type{ margin-top:4px; }
-.wb-navbtn{
-  width:100%; text-align:left; background:none; border:none; color:var(--text-1);
-  padding:9px 10px; border-radius:var(--r); font-size:13px; cursor:pointer;
-  font-family:var(--sans); display:flex; align-items:center; gap:9px;
-  transition:background .12s, color .12s;
+.wb-topbar{
+  display:flex; gap:4px; padding:10px 16px;
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
 }
-.wb-navbtn .wb-n{ font-family:var(--mono); font-size:10px; color:var(--text-2); width:16px; flex-shrink:0; }
-.wb-navbtn:hover{ background:var(--bg-card-h); color:var(--text-0); }
-.wb-navbtn.active{ background:var(--yellow-bg); color:var(--yellow); }
-.wb-navbtn.active .n{ color:var(--yellow); }
+.wb-cat-btn{
+  flex-shrink:0;
+  display:flex; align-items:center; gap:6px;
+  background:var(--bg-card); border:1px solid var(--border);
+  color:var(--text-1);
+  padding:8px 14px; border-radius:100px;
+  font-family:var(--mono); font-size:11.5px; font-weight:600; letter-spacing:.03em;
+  white-space:nowrap; cursor:pointer;
+  transition:background .12s, color .12s, border-color .12s;
+}
+.wb-cat-btn:hover{ border-color:var(--border-yellow); color:var(--text-0); }
+.wb-cat-btn.has-active{ border-color:var(--border-yellow); color:var(--yellow); }
+.wb-cat-btn.open{ background:var(--yellow-bg); border-color:var(--border-yellow); color:var(--yellow); }
+.wb-cat-chevron{ font-size:9px; opacity:.7; }
 
-.wb-main{ flex:1; padding:36px 44px; max-width:1000px; }
+.wb-dropdown{
+  display:flex; flex-wrap:wrap; gap:6px;
+  padding:4px 16px 16px;
+  border-top:1px solid var(--border);
+  margin-top:-1px;
+  animation:wb-drop .15s ease;
+}
+@keyframes wb-drop{ from{ opacity:0; transform:translateY(-4px); } to{ opacity:1; transform:translateY(0); } }
+.wb-dropdown-item{
+  display:flex; align-items:center; gap:8px;
+  background:var(--bg-card); border:1px solid var(--border);
+  color:var(--text-1);
+  padding:9px 14px; border-radius:var(--r);
+  font-family:var(--sans); font-size:13px; cursor:pointer;
+  transition:background .12s, color .12s, border-color .12s;
+}
+.wb-dropdown-item:hover{ background:var(--bg-card-h); color:var(--text-0); }
+.wb-dropdown-item.active{ background:var(--yellow-bg); border-color:var(--border-yellow); color:var(--yellow); }
+.wb-dropdown-item .wb-n{ font-family:var(--mono); font-size:10px; color:var(--text-2); }
+.wb-dropdown-item.active .wb-n{ color:var(--yellow); }
+
+.wb-main-full{ padding:32px 44px 60px; max-width:1000px; margin:0 auto; }
 
 .wb-eyebrow{ font-family:var(--mono); font-size:10.5px; color:var(--yellow); letter-spacing:.1em; text-transform:uppercase; margin-bottom:8px; }
 .wb-shell h1{ font-family:var(--mono); font-size:1.7rem; margin:0 0 6px; font-weight:600; color:var(--text-0); }
@@ -1214,8 +1234,8 @@ const CSS = `
 }
 .wb-shell input:focus, .wb-shell select:focus{ outline:none; border-color:var(--border-yellow); }
 .wb-shell input:focus-visible, .wb-shell select:focus-visible{ box-shadow:0 0 0 2px rgba(245,183,49,0.2); }
-.wb-navbtn:focus-visible, .wb-btn:focus-visible{ outline:2px solid var(--yellow); outline-offset:-2px; }
-.wb-navbtn, .wb-btn{ touch-action:manipulation; }
+.wb-cat-btn:focus-visible, .wb-dropdown-item:focus-visible, .wb-btn:focus-visible{ outline:2px solid var(--yellow); outline-offset:-2px; }
+.wb-cat-btn, .wb-dropdown-item, .wb-btn{ touch-action:manipulation; }
 .wb-stat .v, .wb-shell td, .wb-bar-row .val{ font-variant-numeric:tabular-nums; }
 .wb-row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 
@@ -1261,13 +1281,11 @@ const CSS = `
 .wb-scatter{ width:100%; height:auto; }
 .wb-dot{ cursor:pointer; }
 
-.wb-sidebar::-webkit-scrollbar{ width:8px; }
-.wb-sidebar::-webkit-scrollbar-thumb{ background:var(--border-md); border-radius:5px; }
-
-@media(max-width:900px){
-  .wb-app{ flex-direction:column; }
-  .wb-sidebar{ width:100%; position:relative; top:0; max-height:none; border-right:none; border-bottom:1px solid var(--border); }
-  .wb-main{ padding:24px 20px; max-width:100%; }
+@media(max-width:600px){
+  .wb-topbar{ padding:8px 12px; }
+  .wb-cat-btn{ padding:7px 12px; font-size:11px; }
+  .wb-dropdown{ padding:4px 12px 12px; }
+  .wb-main-full{ padding:20px 16px 48px; }
 }
 `
 
@@ -1275,7 +1293,9 @@ export function WaferBenchClient() {
   const router = useRouter()
   const pathname = usePathname()
   const [active, setActive] = useState("chipcost")
+  const [openCategory, setOpenCategory] = useState<number | null>(null)
   const mainRef = useRef<HTMLDivElement | null>(null)
+  const topbarRef = useRef<HTMLDivElement | null>(null)
 
   const grouped = useMemo(() => {
     const byGroup = new Map<number, Tool[]>()
@@ -1292,6 +1312,8 @@ export function WaferBenchClient() {
     return map
   }, [])
 
+  const activeGroup = useMemo(() => TOOLS.find((t) => t.id === active)?.group, [active])
+
   // Picks up ?tool=... on arrival, same way supply-chain-explorer.tsx picks
   // up ?region=... — read from window.location directly rather than
   // useSearchParams() so this doesn't need its own Suspense boundary.
@@ -1301,8 +1323,30 @@ export function WaferBenchClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Click-outside and Escape both close whichever category dropdown is
+  // open. Only attached while a dropdown is actually open, and removed
+  // again on close/unmount.
+  useEffect(() => {
+    if (openCategory === null) return
+    function onPointerDown(e: PointerEvent) {
+      if (topbarRef.current && !topbarRef.current.contains(e.target as Node)) {
+        setOpenCategory(null)
+      }
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpenCategory(null)
+    }
+    document.addEventListener("pointerdown", onPointerDown)
+    document.addEventListener("keydown", onKeyDown)
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown)
+      document.removeEventListener("keydown", onKeyDown)
+    }
+  }, [openCategory])
+
   function selectTool(id: string) {
     setActive(id)
+    setOpenCategory(null)
     const params = new URLSearchParams(window.location.search)
     params.set("tool", id)
     router.replace(`${pathname}?${params}`, { scroll: false })
@@ -1325,34 +1369,43 @@ export function WaferBenchClient() {
   return (
     <div className="wb-shell">
       <style>{CSS}</style>
-      <div className="wb-app">
-        <aside className="wb-sidebar" aria-label="Tool categories">
-          <div className="wb-brand">
-            <span className="wb-brand-mark" aria-hidden="true" />
-            <span translate="no">Wafer Bench</span>
+      <div className="wb-topbar-wrap" ref={topbarRef}>
+        <div className="wb-topbar" role="tablist" aria-label="Tool categories">
+          {grouped.map(([groupNum, tools]) => {
+            const isOpen = openCategory === groupNum
+            const hasActive = groupNum === activeGroup
+            return (
+              <button
+                key={groupNum}
+                type="button"
+                className={`wb-cat-btn${hasActive ? " has-active" : ""}${isOpen ? " open" : ""}`}
+                aria-expanded={isOpen}
+                aria-haspopup="true"
+                onClick={() => setOpenCategory(isOpen ? null : groupNum)}
+              >
+                {GROUP_LABELS[groupNum]}
+                <span className="wb-cat-chevron" aria-hidden="true">{isOpen ? "▴" : "▾"}</span>
+              </button>
+            )
+          })}
+        </div>
+        {openCategory !== null && (
+          <div className="wb-dropdown">
+            {grouped.find(([g]) => g === openCategory)?.[1].map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                className={`wb-dropdown-item${t.id === active ? " active" : ""}`}
+                onClick={() => selectTool(t.id)}
+              >
+                <span className="wb-n">{String(toolNumber.get(t.id)).padStart(2, "0")}</span>
+                {t.name}
+              </button>
+            ))}
           </div>
-          <div className="wb-brand-sub">supply-chain engineering tools</div>
-          {grouped.map(([groupNum, tools]) => (
-            <div key={groupNum}>
-              <div className="wb-navlabel">{GROUP_LABELS[groupNum]}</div>
-              <nav>
-                {tools.map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    className={`wb-navbtn${t.id === active ? " active" : ""}`}
-                    onClick={() => selectTool(t.id)}
-                  >
-                    <span className="wb-n">{String(toolNumber.get(t.id)).padStart(2, "0")}</span>
-                    {t.name}
-                  </button>
-                ))}
-              </nav>
-            </div>
-          ))}
-        </aside>
-        <div ref={mainRef} className="wb-main" />
+        )}
       </div>
+      <div ref={mainRef} className="wb-main-full" />
     </div>
   )
 }
